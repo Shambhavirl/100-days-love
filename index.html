@@ -122,6 +122,15 @@ fetch("messages.json")
     renderSidebar(messages);
   });
 
+const hasSeenToday = openedDays.includes(currentDay);
+
+if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
+  document.title = "💌 New! 100 Days With You";
+}
+
+   document.title = "100 Days With You 💟(and more obviously)";
+
+
 </script>
 
 
