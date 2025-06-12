@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>modern day love letters hehe </title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+
+<div id="message-modal" class="modal hidden">
+  <div class="modal-content">
+    <img src="assets/GKmeme.jpg" alt="Cute meme" />
+    <div class="text">
+      <button id="close-modal" aria-label="Close message">✖</button>
+      <h3 id="modal-day-title"></h3>
+      <p id="modal-day-text"></p>
+    </div>
+  </div>
+</div>
+
+<body>
+  <div class="main-container">
+    <aside class="sidebar">
+      <h2>Opened Days</h2>
+      <ul id="opened-days"></ul>
+    </aside>
+
+    <div class="content">
+      <h1> 100 Days With You 💟(and more obviously)</h1>
+      <div id="big-envelope-container">
+        <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
+      </div>
+
+      <div id="day-message" class="hidden">
+        <h3 id="day-title"></h3>
+        <p id="day-text"></p>
+      </div>
+    </div>
+  </div>
+
+
+ <script>
+  const messages = {
+    "0": `Day 1: I really like your laugh, have I ever told you that? Probably have. 
+    I've fallen for your laugh, which is utterly contagious. 
+    I have also fallen for your smile which makes me giddy for no reason at all (or a lot actually). 
+    I've fallen for your silly and TOTALLY ORIGINAL jokes, which I remember randomly and just smile or burst into laughter at (my mom thinks I'm crazy atp). 
+    I've fallen for how you make my day better, even if I wanted to cry a minute before. 
+    I've also fallen for every second I get to spend with you even if those leave me wanting more.  
+    Every moment with you feels like the sweetest story, and I can't wait for all the chapters we'll write together. 🤍`,
+  };
+
+  // Force Day 1 until your official start
+const startDate = new Date("2025-06-12T00:00:00");
+const today = new Date();
+const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+
+  const bigEnvelope = document.getElementById("big-envelope");
+  const modal = document.getElementById("message-modal");
+  const modalDayTitle = document.getElementById("modal-day-title");
+  const modalDayText = document.getElementById("modal-day-text");
+  const closeModalBtn = document.getElementById("close-modal");
+
+  let opened = false;
+
+  bigEnvelope.addEventListener("click", () => {
+    if (opened) return;
+    opened = true;
+
+    bigEnvelope.src = "assets/envelope_open.png";
+    modalDayTitle.textContent = `Day ${currentDay + 1}`;
+    modalDayText.textContent = messages[currentDay] || "Come back tomorrow for another letter 🩷";
+    modal.classList.remove("hidden");
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    opened = false;
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.add("hidden");
+      opened = false;
+    }
+  });
+</script>
