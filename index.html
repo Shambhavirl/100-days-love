@@ -97,6 +97,7 @@
         showMessageModal(currentDay, messages);
       });
   });
+   
 
   closeModalBtn.addEventListener("click", () => {
     modal.classList.add("hidden");
@@ -108,12 +109,19 @@
     }
   });
 
-  // Load sidebar immediately on page load
-  fetch("messages.json")
-    .then((res) => res.json())
-    .then((messages) => {
-      renderSidebar(messages);
-    });
+ // Ensure Day 1 is always added to sidebar
+if (!openedDays.includes(0)) {
+  openedDays.push(0);
+  localStorage.setItem(storageKey, JSON.stringify(openedDays));
+}
+
+// Load sidebar immediately on page load
+fetch("messages.json")
+  .then((res) => res.json())
+  .then((messages) => {
+    renderSidebar(messages);
+  });
+
 </script>
 
 
