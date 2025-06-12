@@ -41,50 +41,60 @@
     </div>
   </div>
 
-  <script>
-    let opened = false;
+ <script>
+  let opened = false;
 
-    const bigEnvelope = document.getElementById("big-envelope");
-    const modal = document.getElementById("message-modal");
-    const modalDayTitle = document.getElementById("modal-day-title");
-    const modalDayText = document.getElementById("modal-day-text");
-    const closeModalBtn = document.getElementById("close-modal");
+  const bigEnvelope = document.getElementById("big-envelope");
+  const modal = document.getElementById("message-modal");
+  const modalDayTitle = document.getElementById("modal-day-title");
+  const modalDayText = document.getElementById("modal-day-text");
+  const closeModalBtn = document.getElementById("close-modal");
+  const memeImg = document.querySelector(".meme-img");
 
-    const startDate = new Date("2025-06-12T00:00:00");
-    const today = new Date();
-    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+  const startDate = new Date("2025-06-12T00:00:00");
+  const today = new Date();
+  const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
-    bigEnvelope.addEventListener("click", () => {
-      if (opened) return;
-      opened = true;
+  bigEnvelope.addEventListener("click", () => {
+    if (opened) return;
+    opened = true;
 
-      fetch("messages.json")
-        .then(response => response.json())
-        .then(messages => {
-          bigEnvelope.src = "assets/envelope_open.png";
-          modalDayTitle.textContent = `Day ${currentDay + 1}`;
-          modalDayText.textContent = messages[currentDay] || "Come back tomorrow for another letter 🩷";
-          modal.classList.remove("hidden");
-        })
-        .catch(error => {
-          console.error("Could not load messages:", error);
-          modalDayTitle.textContent = "Oops!";
-          modalDayText.textContent = "Couldn't load your letter. Please try again later.";
-          modal.classList.remove("hidden");
-        });
-    });
+    fetch("messages.json")
+      .then(response => response.json())
+      .then(messages => {
+        bigEnvelope.src = "assets/envelope_open.png";
+        modalDayTitle.textContent = `Day ${currentDay + 1}`;
+        modalDayText.textContent = messages[currentDay] || "Come back tomorrow for another letter 🩷";
 
-    closeModalBtn.addEventListener("click", () => {
+        // Show meme only for Day 0 (i.e. Day 1)
+        if (currentDay === 0) {
+          memeImg.style.display = "block";
+        } else {
+          memeImg.style.display = "none";
+        }
+
+        modal.classList.remove("hidden");
+      })
+      .catch(error => {
+        console.error("Could not load messages:", error);
+        modalDayTitle.textContent = "Oops!";
+        modalDayText.textContent = "Couldn't load your letter. Please try again later.";
+        modal.classList.remove("hidden");
+      });
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    opened = false;
+  });
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
       modal.classList.add("hidden");
       opened = false;
-    });
+    }
+  });
+</script>
 
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-        opened = false;
-      }
-    });
-  </script>
 </body>
 </html>
