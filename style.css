@@ -207,15 +207,3 @@ h1 {
   font-weight: 700;
   margin-bottom: 15px;
 }
-
-#big-envelope-container.new::after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  right: 20px;
-  width: 10px;
-  height: 10px;
-  background: red;
-  border-radius: 50%;
-}
-
