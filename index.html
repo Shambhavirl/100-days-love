@@ -130,6 +130,10 @@ if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]
 
    document.title = "100 Days With You 💟(and more obviously)";
 
+if (!openedDays.includes(currentDay) && messages[currentDay]) {
+  document.getElementById("big-envelope-container").classList.add("new");
+}
+document.getElementById("big-envelope-container").classList.remove("new");
 
 </script>
 
