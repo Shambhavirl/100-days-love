@@ -171,7 +171,9 @@ h1 {
 }
 
 .modal-content .text {
-  flex: 1;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 1rem;
 }
 
 .modal-content h3 {
