@@ -51,11 +51,13 @@
     const storageKey = "ad_love_notes_opened";
     let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
 
-   // Force Day 7, 8, and 9 to appear
+// Force Day 6, 7, 8, and 9 to appear
+if (!openedDays.includes(5)) openedDays.push(5); // Day 6
 if (!openedDays.includes(6)) openedDays.push(6); // Day 7
 if (!openedDays.includes(7)) openedDays.push(7); // Day 8
 if (!openedDays.includes(8)) openedDays.push(8); // Day 9
 localStorage.setItem(storageKey, JSON.stringify(openedDays));
+
 
 
     const startDate = new Date("2025-06-12T00:00:00");
