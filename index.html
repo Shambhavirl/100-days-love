@@ -51,6 +51,11 @@
     const storageKey = "ad_love_notes_opened";
     let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
 
+    // Force Day 7 (index 6) and Day 8 (index 7) to appear
+    if (!openedDays.includes(6)) openedDays.push(6);
+    if (!openedDays.includes(7)) openedDays.push(7);
+    localStorage.setItem(storageKey, JSON.stringify(openedDays));
+
     const startDate = new Date("2025-06-12T00:00:00");
     const today = new Date();
     const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
