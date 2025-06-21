@@ -83,13 +83,14 @@ localStorage.setItem(storageKey, JSON.stringify(openedDays));
       });
     }
 
-    function showMessageModal(day, messages) {
-      modalDayTitle.textContent = `Day ${day + 1}`;
-      modalDayText.textContent = messages[day] || "Message not found yet 💌";
+function showMessageModal(day, messages) {
+  modalDayTitle.textContent = `Day ${day + 1}`;
+  modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
 
-      memeImg.style.display = (day === 0) ? "block" : "none";
-      modal.classList.remove("hidden");
-    }
+  memeImg.style.display = (day === 0) ? "block" : "none";
+  modal.classList.remove("hidden");
+}
+
 
     bigEnvelope.addEventListener("click", () => {
       if (currentDay < 0 || currentDay > 99) return;
