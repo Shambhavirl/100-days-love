@@ -39,113 +39,75 @@
     </div>
   </div>
 
-  <script>
-    const bigEnvelope = document.getElementById("big-envelope");
-    const modal = document.getElementById("message-modal");
-    const modalDayTitle = document.getElementById("modal-day-title");
-    const modalDayText = document.getElementById("modal-day-text");
-    const closeModalBtn = document.getElementById("close-modal");
-    const memeImg = document.querySelector(".meme-img");
-    const openedDaysList = document.getElementById("opened-days");
+<script>
+  const bigEnvelope = document.getElementById("big-envelope");
+  const modal = document.getElementById("message-modal");
+  const modalDayTitle = document.getElementById("modal-day-title");
+  const modalDayText = document.getElementById("modal-day-text");
+  const closeModalBtn = document.getElementById("close-modal");
+  const memeImg = document.querySelector(".meme-img");
+  const openedDaysList = document.getElementById("opened-days");
 
-    const storageKey = "ad_love_notes_opened";
-    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+  const startDate = new Date("2025-06-12T00:00:00");
+  const today = new Date();
+  const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
-// Force Day 6, 7, 8, and 9 to appear
-if (!openedDays.includes(5)) openedDays.push(5); // Day 6
-if (!openedDays.includes(6)) openedDays.push(6); // Day 7
-if (!openedDays.includes(7)) openedDays.push(7); // Day 8
-if (!openedDays.includes(8)) openedDays.push(8); // Day 9
-if (!openedDays.includes(9)) openedDays.push(9); // Day 10
-if (!openedDays.includes(17)) openedDays.push(17); // Day 17
-if (!openedDays.includes(19)) openedDays.push(19); // Day 19
-if (!openedDays.includes(21)) openedDays.push(21); // Day 21
-    
-localStorage.setItem(storageKey, JSON.stringify(openedDays));
+  function renderSidebar(messages) {
+    openedDaysList.innerHTML = "";
 
-
-
-    const startDate = new Date("2025-06-12T00:00:00");
-    const today = new Date();
-    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-
-    function saveOpenedDay(day) {
-      if (!openedDays.includes(day)) {
-        openedDays.push(day);
-        localStorage.setItem(storageKey, JSON.stringify(openedDays));
-      }
-    }
-
-    function renderSidebar(messages) {
-      openedDaysList.innerHTML = "";
-
-      openedDays.sort((a, b) => a - b).forEach((day) => {
-        const li = document.createElement("li");
-        li.textContent = `Day ${day + 1}`;
-        li.className = "mini-envelope";
-        li.addEventListener("click", () => {
-          showMessageModal(day, messages);
-        });
-        openedDaysList.appendChild(li);
+    // Show all messages up to today (inclusive)
+    for (let day = 0; day <= currentDay && day < messages.length; day++) {
+      const li = document.createElement("li");
+      li.textContent = `Day ${day + 1}`;
+      li.className = "mini-envelope";
+      li.addEventListener("click", () => {
+        showMessageModal(day, messages);
       });
+      openedDaysList.appendChild(li);
     }
+  }
 
-function showMessageModal(day, messages) {
-  modalDayTitle.textContent = `Day ${day + 1}`;
-  modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+  function showMessageModal(day, messages) {
+    modalDayTitle.textContent = `Day ${day + 1}`;
+    modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+    memeImg.style.display = (day === 0) ? "block" : "none";
+    modal.classList.remove("hidden");
+  }
 
-  memeImg.style.display = (day === 0) ? "block" : "none";
-  modal.classList.remove("hidden");
-}
+  bigEnvelope.addEventListener("click", () => {
+    if (currentDay < 0 || currentDay >= 100) return;
 
-
-    bigEnvelope.addEventListener("click", () => {
-      if (currentDay < 0 || currentDay > 99) return;
-
-      fetch("messages.json")
-        .then((response) => response.json())
-        .then((messages) => {
-          bigEnvelope.src = "assets/envelope_open.png";
-          saveOpenedDay(currentDay);
-          renderSidebar(messages);
-          showMessageModal(currentDay, messages);
-        });
-    });
-
-    closeModalBtn.addEventListener("click", () => {
-      modal.classList.add("hidden");
-    });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-      }
-    });
-
-    // Ensure Day 1 is always added to sidebar
-    if (!openedDays.includes(0)) {
-      openedDays.push(0);
-      localStorage.setItem(storageKey, JSON.stringify(openedDays));
-    }
-
-    // Load sidebar immediately on page load
     fetch("messages.json")
-      .then((res) => res.json())
+      .then((response) => response.json())
       .then((messages) => {
-        renderSidebar(messages);
+        bigEnvelope.src = "assets/envelope_open.png";
+        showMessageModal(currentDay, messages);
       });
+  });
 
-    const hasSeenToday = openedDays.includes(currentDay);
+  closeModalBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
 
-    fetch("messages.json")
-      .then(res => res.json())
-      .then(messages => {
-        if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
-          document.title = "💌 New! 100 Days With You";
-        } else {
-          document.title = "100 Days With You 💟(and more obviously)";
-        }
-      });
-  </script>
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.add("hidden");
+    }
+  });
+
+  // Load messages on page load and render sidebar
+  fetch("messages.json")
+    .then((res) => res.json())
+    .then((messages) => {
+      renderSidebar(messages);
+      // Title notification for fresh message
+      if (currentDay >= 0 && currentDay < messages.length) {
+        document.title = "💌 New! 100 Days With You";
+      } else {
+        document.title = "100 Days With You 💟(and more obviously)";
+      }
+    });
+</script>
+
 </body>
 </html>
