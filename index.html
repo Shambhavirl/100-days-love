@@ -8,6 +8,39 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    #toggle-replies-only {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      color: #6c42a7;
+    }
+
+    #toggle-replies-only input {
+      accent-color: #b984e3;
+    }
+
+    .heart-burst {
+      position: absolute;
+      font-size: 1.5rem;
+      pointer-events: none;
+      animation: pop 1s ease-out forwards;
+      transition: transform 1s ease, opacity 1s ease;
+      z-index: 9999;
+    }
+
+    @keyframes pop {
+      0% {
+        opacity: 1;
+        transform: scale(1) translate(0, 0);
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -15,26 +48,29 @@
     <div class="modal-content">
       <img src="assets/GKmeme.jpg" alt="Cute meme" class="meme-img" />
       <div class="text">
-  <button id="close-modal" aria-label="Close message">✖</button>
-  <h3 id="modal-day-title"></h3>
-  <p id="modal-day-text"></p>
+        <button id="close-modal" aria-label="Close message">✖</button>
+        <h3 id="modal-day-title"></h3>
+        <p id="modal-day-text"></p>
 
-  <div id="reply-section">
-    <h4>Your Reply ✍️</h4>
-    <textarea id="reply-input" placeholder="Write something sweet..."></textarea>
-    <button id="send-reply">Send Reply</button>
-    <div id="saved-reply" class="hidden">
-      <h5>📝 Adit's Reply:</h5>
-      <p id="reply-text"></p>
-    </div>
-  </div>
-</div>
-
+        <div id="reply-section">
+          <h4>Your Reply ✍️</h4>
+          <textarea id="reply-input" placeholder="Write something sweet..."></textarea>
+          <button id="send-reply">Send Reply</button>
+          <div id="saved-reply" class="hidden">
+            <h5>📝 Adit's Reply:</h5>
+            <p id="reply-text"></p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <aside class="sidebar">
     <h2>All Days</h2>
+    <label id="toggle-replies-only">
+      <input type="checkbox" id="replies-only-checkbox" />
+      💬 View Replies Only
+    </label>
     <ul id="opened-days"></ul>
   </aside>
 
@@ -50,77 +86,142 @@
     </div>
   </div>
 
-<script>
-  const bigEnvelope = document.getElementById("big-envelope");
-  const modal = document.getElementById("message-modal");
-  const modalDayTitle = document.getElementById("modal-day-title");
-  const modalDayText = document.getElementById("modal-day-text");
-  const closeModalBtn = document.getElementById("close-modal");
-  const memeImg = document.querySelector(".meme-img");
-  const openedDaysList = document.getElementById("opened-days");
+  <script>
+    const bigEnvelope = document.getElementById("big-envelope");
+    const modal = document.getElementById("message-modal");
+    const modalDayTitle = document.getElementById("modal-day-title");
+    const modalDayText = document.getElementById("modal-day-text");
+    const closeModalBtn = document.getElementById("close-modal");
+    const memeImg = document.querySelector(".meme-img");
+    const openedDaysList = document.getElementById("opened-days");
 
-  const startDate = new Date("2025-06-12T00:00:00");
-  const today = new Date();
-  const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    const replyInput = document.getElementById("reply-input");
+    const sendReplyBtn = document.getElementById("send-reply");
+    const savedReply = document.getElementById("saved-reply");
+    const replyText = document.getElementById("reply-text");
 
-  function renderSidebar(messages) {
-    openedDaysList.innerHTML = "";
+    const startDate = new Date("2025-06-12T00:00:00");
+    const today = new Date();
+    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
-    for (let day = 0; day <= currentDay && day < messages.length; day++) {
-      const li = document.createElement("li");
-      li.textContent = `Day ${day + 1}`;
-      li.className = "mini-envelope";
-      li.addEventListener("click", () => {
-        showMessageModal(day, messages);
-      });
-      openedDaysList.appendChild(li);
-    }
-  }
+    function renderSidebar(messages) {
+      const showRepliesOnly = document.getElementById("replies-only-checkbox").checked;
+      openedDaysList.innerHTML = "";
 
-  function showMessageModal(day, messages) {
-    modalDayTitle.textContent = `Day ${day + 1}`;
-    modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-    memeImg.style.display = (day === 0) ? "block" : "none";
-    modal.classList.remove("hidden");
-  }
+      for (let day = 0; day <= currentDay && day < messages.length; day++) {
+        const replyKey = `reply_day_${day}`;
+        const hasReply = !!localStorage.getItem(replyKey);
 
-  closeModalBtn.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
+        if (showRepliesOnly && !hasReply) continue;
 
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      modal.classList.add("hidden");
-    }
-  });
-
-  fetch("messages.json")
-    .then((res) => {
-      if (!res.ok) throw new Error("Could not load messages.json");
-      return res.json();
-    })
-    .then((messages) => {
-      renderSidebar(messages);
-
-      // Big envelope opens today's message
-      bigEnvelope.addEventListener("click", () => {
-        if (currentDay >= 0 && currentDay < messages.length) {
-          bigEnvelope.src = "assets/envelope_open.png";
-          showMessageModal(currentDay, messages);
-        }
-      });
-
-      // Page title logic
-      if (currentDay >= 0 && currentDay < messages.length) {
-        document.title = "💌 New! 100 Days With You";
-      } else {
-        document.title = "100 Days With You 💟 (and more obviously)";
+        const li = document.createElement("li");
+        li.textContent = `Day ${day + 1}`;
+        li.className = "mini-envelope";
+        li.addEventListener("click", () => {
+          showMessageModal(day, messages);
+        });
+        openedDaysList.appendChild(li);
       }
-    })
-    .catch((err) => {
-      console.error("Error loading messages:", err);
-      alert("Couldn't load your letters. Make sure messages.json exists and is correctly formatted.");
+    }
+
+    document.getElementById("replies-only-checkbox").addEventListener("change", () => {
+      fetch("messages.json")
+        .then(res => res.json())
+        .then(messages => {
+          renderSidebar(messages);
+        });
     });
-</script>
+
+    function showMessageModal(day, messages) {
+      const replyKey = `reply_day_${day}`;
+      modalDayTitle.textContent = `Day ${day + 1}`;
+      modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+      memeImg.style.display = (day === 0) ? "block" : "none";
+      modal.classList.remove("hidden");
+
+      const saved = localStorage.getItem(replyKey);
+      if (saved) {
+        replyText.textContent = saved;
+        savedReply.classList.remove("hidden");
+      } else {
+        savedReply.classList.add("hidden");
+      }
+      replyInput.value = "";
+
+      sendReplyBtn.onclick = () => {
+        const reply = replyInput.value.trim();
+        if (reply) {
+          localStorage.setItem(replyKey, reply);
+          replyText.textContent = reply;
+          savedReply.classList.remove("hidden");
+          renderSidebar(messages);
+
+          // 💖 HEART BURST!
+          createHeartBurst(sendReplyBtn);
+        }
+      };
+    }
+
+    function createHeartBurst(button) {
+      for (let i = 0; i < 10; i++) {
+        const heart = document.createElement("div");
+        heart.textContent = "💖";
+        heart.className = "heart-burst";
+        document.body.appendChild(heart);
+
+        const rect = button.getBoundingClientRect();
+        heart.style.left = `${rect.left + rect.width / 2}px`;
+        heart.style.top = `${rect.top + rect.height / 2}px`;
+
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = Math.random() * 80 + 20;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+
+        heart.style.transform = `translate(${x}px, ${y}px) scale(1.2)`;
+        heart.style.opacity = "0";
+
+        setTimeout(() => {
+          heart.remove();
+        }, 1000);
+      }
+    }
+
+    closeModalBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+      }
+    });
+
+    fetch("messages.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not load messages.json");
+        return res.json();
+      })
+      .then((messages) => {
+        renderSidebar(messages);
+
+        bigEnvelope.addEventListener("click", () => {
+          if (currentDay >= 0 && currentDay < messages.length) {
+            bigEnvelope.src = "assets/envelope_open.png";
+            showMessageModal(currentDay, messages);
+          }
+        });
+
+        if (currentDay >= 0 && currentDay < messages.length) {
+          document.title = "💌 New! 100 Days With You";
+        } else {
+          document.title = "100 Days With You 💟 (and more obviously)";
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading messages:", err);
+        alert("Couldn't load your letters. Make sure messages.json exists and is correctly formatted.");
+      });
+  </script>
 </body>
 </html>
