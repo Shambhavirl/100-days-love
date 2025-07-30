@@ -66,29 +66,16 @@
   const savedReply = document.getElementById("saved-reply");
   const replyText = document.getElementById("reply-text");
 
-  const storageKey = "ad_love_notes_opened";
-  let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
-
-  // Force specific days to appear (your existing forced days)
-  [5,6,7,8,9,17,19,21].forEach(d => {
-    if (!openedDays.includes(d)) openedDays.push(d);
-  });
-  localStorage.setItem(storageKey, JSON.stringify(openedDays));
-
   const startDate = new Date("2025-06-12T00:00:00");
   const today = new Date();
   const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
-  function saveOpenedDay(day) {
-    if (!openedDays.includes(day)) {
-      openedDays.push(day);
-      localStorage.setItem(storageKey, JSON.stringify(openedDays));
-    }
-  }
+  // No localStorage tracking for opened days anymore, just all 100 days unlocked
+  const totalDays = 100;
 
   function renderSidebar(messages) {
     openedDaysList.innerHTML = "";
-    openedDays.sort((a, b) => a - b).forEach(day => {
+    for (let day = 0; day < totalDays; day++) {
       const li = document.createElement("li");
       li.textContent = `Day ${day + 1}`;
       li.className = "mini-envelope";
@@ -96,7 +83,7 @@
         showMessageModal(day, messages);
       });
       openedDaysList.appendChild(li);
-    });
+    }
   }
 
   let currentOpenDay = null;
@@ -142,8 +129,6 @@
       .then(response => response.json())
       .then(messages => {
         bigEnvelope.src = "assets/envelope_open.png";
-        saveOpenedDay(currentDay);
-        renderSidebar(messages);
         showMessageModal(currentDay, messages);
       });
   });
@@ -158,30 +143,23 @@
     }
   });
 
-  // Ensure Day 1 is always opened
-  if (!openedDays.includes(0)) {
-    openedDays.push(0);
-    localStorage.setItem(storageKey, JSON.stringify(openedDays));
-  }
-
-  // Load sidebar immediately on page load
+  // Load sidebar immediately on page load with all days visible
   fetch("messages.json")
     .then(res => res.json())
     .then(messages => {
       renderSidebar(messages);
     });
 
-  const hasSeenToday = openedDays.includes(currentDay);
-
   fetch("messages.json")
     .then(res => res.json())
     .then(messages => {
-      if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
+      if (currentDay >= 0 && currentDay < totalDays && messages[currentDay]) {
         document.title = "💌 New! 100 Days With You";
       } else {
         document.title = "100 Days With You 💟(and more obviously)";
       }
     });
 </script>
+
 </body>
 </html>
