@@ -11,6 +11,25 @@
 </head>
 
 <body>
+  <div class="main-container">
+    <aside class="sidebar">
+      <h2>Opened Days</h2>
+      <ul id="opened-days"></ul>
+    </aside>
+
+    <div class="content">
+      <h1>100 Days With You 💟 (and more obviously)</h1>
+      <div id="big-envelope-container">
+        <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
+      </div>
+
+      <div id="day-message" class="hidden">
+        <h3 id="day-title"></h3>
+        <p id="day-text"></p>
+      </div>
+    </div>
+  </div>
+
   <div id="message-modal" class="modal hidden">
     <div class="modal-content">
       <img src="assets/GKmeme.jpg" alt="Cute meme" class="meme-img" />
@@ -23,30 +42,12 @@
           <h4>Your Reply ✍️</h4>
           <textarea id="reply-input" placeholder="omg ur replying!!"></textarea>
           <button id="send-reply">Send Reply</button>
-
           <div id="saved-reply" class="hidden">
             <h5>📝 Your saved reply:</h5>
             <p id="reply-text"></p>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <aside class="sidebar">
-    <h2>All Days</h2>
-    <ul id="opened-days"></ul>
-  </aside>
-
-  <div class="content">
-    <h1>100 Days With You 💟 (and more obviously)</h1>
-    <div id="big-envelope-container">
-      <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
-    </div>
-
-    <div id="day-message" class="hidden">
-      <h3 id="day-title"></h3>
-      <p id="day-text"></p>
     </div>
   </div>
 
@@ -65,18 +66,26 @@
     const savedReply = document.getElementById("saved-reply");
     const replyText = document.getElementById("reply-text");
 
-    const startDate = new Date("2025-06-12T00:00:00");
-    const today = new Date();
-    // Calculate days difference based on 12 AM UTC cutoff
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const currentDay = Math.floor((today.getTime() - startDate.getTime()) / msPerDay);
+    const storageKey = "ad_love_notes_opened";
+    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
 
-    const totalDays = 100;
-    let currentOpenDay = null;
+    // Force open ALL days 0 to 99
+    for(let i = 0; i < 100; i++) {
+      if (!openedDays.includes(i)) openedDays.push(i);
+    }
+    localStorage.setItem(storageKey, JSON.stringify(openedDays));
+
+    function saveOpenedDay(day) {
+      if (!openedDays.includes(day)) {
+        openedDays.push(day);
+        localStorage.setItem(storageKey, JSON.stringify(openedDays));
+      }
+    }
 
     function renderSidebar(messages) {
       openedDaysList.innerHTML = "";
-      for (let day = 0; day < totalDays; day++) {
+
+      openedDays.sort((a, b) => a - b).forEach((day) => {
         const li = document.createElement("li");
         li.textContent = `Day ${day + 1}`;
         li.className = "mini-envelope";
@@ -84,20 +93,21 @@
           showMessageModal(day, messages);
         });
         openedDaysList.appendChild(li);
-      }
+      });
     }
 
     function showMessageModal(day, messages) {
-      currentOpenDay = day;
       modalDayTitle.textContent = `Day ${day + 1}`;
       modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-
       memeImg.style.display = (day === 0) ? "block" : "none";
       modal.classList.remove("hidden");
 
-      // Load saved reply from localStorage
+      currentOpenDay = day;
+
+      // Load reply if exists
       const replyKey = `reply_day_${day}`;
       const saved = localStorage.getItem(replyKey);
+
       if (saved) {
         replyInput.value = saved;
         savedReply.classList.remove("hidden");
@@ -108,36 +118,35 @@
       }
     }
 
+    let currentOpenDay = null;
+
     sendReplyBtn.addEventListener("click", () => {
       if (currentOpenDay === null) return;
 
       const reply = replyInput.value.trim();
-      if (reply.length === 0) return;
+      if (reply.length === 0) {
+        alert("Please type something before sending your reply!");
+        return;
+      }
 
-      // Save reply locally
-      const replyKey = `reply_day_${currentOpenDay}`;
-      localStorage.setItem(replyKey, reply);
-
-      // Show saved reply area
+      localStorage.setItem(`reply_day_${currentOpenDay}`, reply);
       replyText.textContent = reply;
       savedReply.classList.remove("hidden");
+      // Update sidebar if you want to filter or indicate replies in future
     });
 
     bigEnvelope.addEventListener("click", () => {
-      if (currentDay < 0 || currentDay >= totalDays) return;
-
       fetch("messages.json")
-        .then(response => {
-          if (!response.ok) throw new Error("Failed to load messages.json");
-          return response.json();
-        })
-        .then(messages => {
+        .then((response) => response.json())
+        .then((messages) => {
           bigEnvelope.src = "assets/envelope_open.png";
+          saveOpenedDay(currentDay);
+          renderSidebar(messages);
           showMessageModal(currentDay, messages);
         })
-        .catch(err => {
-          console.error("Error loading messages.json:", err);
-          alert("Oops! Couldn't load letters. Check your messages.json.");
+        .catch((err) => {
+          alert("Failed to load messages.json");
+          console.error(err);
         });
     });
 
@@ -151,25 +160,27 @@
       }
     });
 
-    // Load sidebar immediately on page load
+    const startDate = new Date("2025-06-12T00:00:00");
+    const today = new Date();
+    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+    // Load sidebar on page load
     fetch("messages.json")
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to load messages.json");
-        return res.json();
-      })
-      .then(messages => {
+      .then((res) => res.json())
+      .then((messages) => {
         renderSidebar(messages);
 
-        // Update page title based on today's message availability
-        if (currentDay >= 0 && currentDay < totalDays && messages[currentDay]) {
+        // Change page title if new day message exists
+        const hasSeenToday = openedDays.includes(currentDay);
+        if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
           document.title = "💌 New! 100 Days With You";
         } else {
           document.title = "100 Days With You 💟 (and more obviously)";
         }
       })
-      .catch(err => {
-        console.error("Error loading messages.json:", err);
-        alert("Oops! Couldn't load letters. Check your messages.json.");
+      .catch((err) => {
+        alert("Failed to load messages.json");
+        console.error(err);
       });
   </script>
 </body>
