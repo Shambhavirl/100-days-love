@@ -23,7 +23,7 @@
   </div>
 
   <aside class="sidebar">
-    <h2>Opened Days</h2>
+    <h2>All Days</h2>
     <ul id="opened-days"></ul>
   </aside>
 
@@ -55,7 +55,6 @@
   function renderSidebar(messages) {
     openedDaysList.innerHTML = "";
 
-    // Show all messages up to today (inclusive)
     for (let day = 0; day <= currentDay && day < messages.length; day++) {
       const li = document.createElement("li");
       li.textContent = `Day ${day + 1}`;
@@ -74,17 +73,6 @@
     modal.classList.remove("hidden");
   }
 
-  bigEnvelope.addEventListener("click", () => {
-    if (currentDay < 0 || currentDay >= 100) return;
-
-    fetch("messages.json")
-      .then((response) => response.json())
-      .then((messages) => {
-        bigEnvelope.src = "assets/envelope_open.png";
-        showMessageModal(currentDay, messages);
-      });
-  });
-
   closeModalBtn.addEventListener("click", () => {
     modal.classList.add("hidden");
   });
@@ -95,19 +83,33 @@
     }
   });
 
-  // Load messages on page load and render sidebar
   fetch("messages.json")
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) throw new Error("Could not load messages.json");
+      return res.json();
+    })
     .then((messages) => {
       renderSidebar(messages);
-      // Title notification for fresh message
+
+      // Big envelope opens today's message
+      bigEnvelope.addEventListener("click", () => {
+        if (currentDay >= 0 && currentDay < messages.length) {
+          bigEnvelope.src = "assets/envelope_open.png";
+          showMessageModal(currentDay, messages);
+        }
+      });
+
+      // Page title logic
       if (currentDay >= 0 && currentDay < messages.length) {
         document.title = "💌 New! 100 Days With You";
       } else {
-        document.title = "100 Days With You 💟(and more obviously)";
+        document.title = "100 Days With You 💟 (and more obviously)";
       }
+    })
+    .catch((err) => {
+      console.error("Error loading messages:", err);
+      alert("Couldn't load your letters. Make sure messages.json exists and is correctly formatted.");
     });
 </script>
-
 </body>
 </html>
