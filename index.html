@@ -210,11 +210,35 @@
     const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
     const storageKey = "ad_love_notes_opened";
-    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
-    for (let i = 0; i < 100; i++) {
-      if (!openedDays.includes(i)) openedDays.push(i);
-    }
+   let openedDays = [];
+
+// We'll fetch messages.json and use its keys to build the sidebar
+fetch("messages.json")
+  .then((res) => res.json())
+  .then((messages) => {
+    // Get all message days (0–99) that exist
+    openedDays = Object.keys(messages).map(day => parseInt(day)).sort((a, b) => a - b);
+
+    // Get replies from Firebase
+    db.ref("replies").once("value").then((snapshot) => {
+      firebaseReplies = snapshot.val() || {};
+      renderSidebar(messages);
+
+      // Open today’s message automatically
+      if (messages[currentDay]) {
+        showMessageModal(currentDay, messages);
+        bigEnvelope.src = "assets/envelope_open.png";
+        saveOpenedDay(currentDay);
+      }
+    });
+
+    // Save opened days to localStorage in case you still want it there
     localStorage.setItem(storageKey, JSON.stringify(openedDays));
+  })
+  .catch((err) => {
+    console.error("Error loading messages I HATE CODING", err);
+    alert("Couldn't load love letters 😭");
+  });
 
     let currentOpenDay = null;
     let firebaseReplies = {};
