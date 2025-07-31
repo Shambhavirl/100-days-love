@@ -8,23 +8,133 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500;700&display=swap" rel="stylesheet" />
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Raleway', sans-serif;
+      background-color: #fff7f8;
+    }
+    .main-container {
+      display: flex;
+      flex-direction: row;
+    }
+    .sidebar {
+      width: 25%;
+      background-color: #f9dede;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    .sidebar h2 {
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .mini-envelope {
+      cursor: pointer;
+      padding: 6px 10px;
+      margin: 4px 0;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .mini-envelope:hover {
+      background-color: #ffd6de;
+    }
+    .replied {
+      font-weight: bold;
+      color: #ff006e;
+    }
+    .notification-badge {
+      display: inline-block;
+      background: #ff3b3b;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+    .content {
+      flex: 1;
+      padding: 20px;
+    }
+    .content h1 {
+      font-weight: 700;
+    }
+    #big-envelope-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+    #big-envelope {
+      width: 160px;
+      cursor: pointer;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+    }
+    .hidden {
+      display: none;
+    }
+    .meme-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+      padding: 10px;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #f26196;
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #spotify-blend {
+      margin-top: 40px;
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        box-shadow: none;
+        border-bottom: 2px solid #f0c0c0;
+      }
+    }
+  </style>
 </head>
-
 <body>
   <div class="main-container">
     <aside class="sidebar">
-      <h2>Opened Days</h2>
+      <h2>Opened Days <span id="notificationBadge" class="notification-badge hidden">💌</span></h2>
       <ul id="opened-days"></ul>
-      <div id="notification-badge" style="margin-top:10px; color:#a83279; font-weight:bold;"></div>
-
-      <section class="spotify-blend">
-        <h3>Our Spotify Blend 🎶</h3>
-        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/37i9dQZF1EJMnacOonuiK5?" width="100%" height="152" frameBorder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-      </section>
     </aside>
 
     <div class="content">
@@ -33,9 +143,9 @@
         <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
       </div>
 
-      <div id="day-message" class="hidden">
-        <h3 id="day-title"></h3>
-        <p id="day-text"></p>
+      <div id="spotify-blend">
+        <h3>🎵 Our Spotify Blend</h3>
+        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/YOUR_PLAYLIST_ID_HERE" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
       </div>
     </div>
   </div>
@@ -61,11 +171,13 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCmQCgyOSPo5eH1P01J-eezbHYKvXFAwl8",
       authDomain: "letters-adit.firebaseapp.com",
-      databaseURL: "https://letters-adit-default-rtdb.asia-southeast1.firebasedatabase.app",
+      databaseURL: "https://letters-adit-default-rtdb.firebaseio.com",
       projectId: "letters-adit",
       storageBucket: "letters-adit.appspot.com",
       messagingSenderId: "356670647591",
@@ -83,22 +195,26 @@
     const closeModalBtn = document.getElementById("close-modal");
     const memeImg = document.querySelector(".meme-img");
     const openedDaysList = document.getElementById("opened-days");
-    const notificationBadge = document.getElementById("notification-badge");
+    const notificationBadge = document.getElementById("notificationBadge");
 
     const replyInput = document.getElementById("reply-input");
     const sendReplyBtn = document.getElementById("send-reply");
     const savedReply = document.getElementById("saved-reply");
     const replyText = document.getElementById("reply-text");
 
+    const startDate = new Date("2025-06-12T00:00:00");
+    const today = new Date();
+    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
     const storageKey = "ad_love_notes_opened";
     let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
-
-    for(let i = 0; i < 100; i++) {
+    for (let i = 0; i < 100; i++) {
       if (!openedDays.includes(i)) openedDays.push(i);
     }
     localStorage.setItem(storageKey, JSON.stringify(openedDays));
 
     let currentOpenDay = null;
+    let firebaseReplies = {};
 
     function saveOpenedDay(day) {
       if (!openedDays.includes(day)) {
@@ -109,26 +225,32 @@
 
     function renderSidebar(messages) {
       openedDaysList.innerHTML = "";
+      let unreadCount = 0;
 
       openedDays.sort((a, b) => a - b).forEach((day) => {
         const li = document.createElement("li");
         li.textContent = `Day ${day + 1}`;
         li.className = "mini-envelope";
 
-        db.ref(`replies/day_${day}`).once("value").then((snapshot) => {
-          if (snapshot.exists()) {
-            li.classList.add("has-reply");
-            li.textContent += " 💬";
-            notificationBadge.textContent = "✨ New Reply! ✨";
-          }
-        });
+        const reply = firebaseReplies[`day_${day}`];
+        if (reply && reply.text) {
+          li.classList.add("replied");
+          li.textContent += " 💬";
+          unreadCount++;
+        }
 
         li.addEventListener("click", () => {
           showMessageModal(day, messages);
         });
-
         openedDaysList.appendChild(li);
       });
+
+      if (unreadCount > 0) {
+        notificationBadge.classList.remove("hidden");
+        notificationBadge.textContent = `💌 ${unreadCount}`;
+      } else {
+        notificationBadge.classList.add("hidden");
+      }
     }
 
     function showMessageModal(day, messages) {
@@ -136,53 +258,48 @@
       modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
       memeImg.style.display = (day === 0) ? "block" : "none";
       modal.classList.remove("hidden");
-
       currentOpenDay = day;
-      replyInput.value = "";
-      replyText.textContent = "";
-      savedReply.classList.add("hidden");
 
-      db.ref(`replies/day_${day}`).once("value").then((snapshot) => {
-        const reply = snapshot.val();
-        if (reply) {
-          replyInput.value = reply;
-          replyText.textContent = reply;
-          savedReply.classList.remove("hidden");
-        }
-      });
+      const replyObj = firebaseReplies[`day_${day}`];
+      if (replyObj && replyObj.text) {
+        replyInput.value = replyObj.text;
+        replyText.textContent = replyObj.text;
+        savedReply.classList.remove("hidden");
+      } else {
+        replyInput.value = "";
+        savedReply.classList.add("hidden");
+      }
     }
 
     sendReplyBtn.addEventListener("click", () => {
       if (currentOpenDay === null) return;
-
       const reply = replyInput.value.trim();
       if (reply.length === 0) {
-        alert("typing something before you reply");
+        alert("Please type something before sending your reply!");
         return;
       }
 
-      db.ref(`replies/day_${currentOpenDay}`).set(reply).then(() => {
-        replyText.textContent = reply;
-        savedReply.classList.remove("hidden");
-        notificationBadge.textContent = "";
-      }).catch((err) => {
-        alert("sorry babe the reply ain't saving for some reason, try again?");
-        console.error(err);
+      const replyRef = db.ref(`replies/day_${currentOpenDay}`);
+      replyRef.set({
+        text: reply,
+        timestamp: new Date().toISOString(),
       });
+
+      replyText.textContent = reply;
+      savedReply.classList.remove("hidden");
     });
 
     bigEnvelope.addEventListener("click", () => {
       fetch("messages.json")
-        .then((response) => response.json())
+        .then((res) => res.json())
         .then((messages) => {
-          bigEnvelope.src = "assets/envelope_open.png";
-          saveOpenedDay(currentDay);
-          renderSidebar(messages);
-          showMessageModal(currentDay, messages);
-        })
-        .catch((err) => {
-          alert("Failed to load messages.json");
-          console.error(err);
+          db.ref("replies").once("value").then((snapshot) => {
+            firebaseReplies = snapshot.val() || {};
+            bigEnvelope.src = "assets/envelope_open.png";
+            saveOpenedDay(currentDay);
+            renderSidebar(messages);
+            showMessageModal(currentDay, messages);
+          });
         });
     });
 
@@ -196,32 +313,14 @@
       }
     });
 
-    const startDate = new Date("2025-06-12T00:00:00");
-    const today = new Date();
-    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-
     fetch("messages.json")
       .then((res) => res.json())
       .then((messages) => {
-        renderSidebar(messages);
-        const hasSeenToday = openedDays.includes(currentDay);
-        if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
-          document.title = "💌 New! Days With You";
-        } else {
-          document.title = "Days With You 💟";
-        }
-      })
-      .catch((err) => {
-        alert("Failed to load messages.json");
-        console.error(err);
+        db.ref("replies").once("value").then((snapshot) => {
+          firebaseReplies = snapshot.val() || {};
+          renderSidebar(messages);
+        });
       });
   </script>
-
-  <style>
-    .has-reply {
-      color: #a83279;
-      font-weight: bold;
-    }
-  </style>
 </body>
 </html>
