@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500;700&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 
 <body>
@@ -52,6 +56,22 @@
   </div>
 
   <script>
+    // 🔥 Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCmQCgyOSPo5eH1P01J-eezbHYKvXFAwl8",
+      authDomain: "letters-adit.firebaseapp.com",
+      databaseURL: "https://letters-adit-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "letters-adit",
+      storageBucket: "letters-adit.appspot.com",
+      messagingSenderId: "356670647591",
+      appId: "1:356670647591:web:35f8d27862408a793e8d02",
+      measurementId: "G-D6SKKCBCN6"
+    };
+
+    // 🔌 Firebase Init
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     const bigEnvelope = document.getElementById("big-envelope");
     const modal = document.getElementById("message-modal");
     const modalDayTitle = document.getElementById("modal-day-title");
@@ -69,7 +89,6 @@
     const storageKey = "ad_love_notes_opened";
     let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
 
-    // Force open ALL days 0 to 99
     for(let i = 0; i < 100; i++) {
       if (!openedDays.includes(i)) openedDays.push(i);
     }
@@ -96,6 +115,8 @@
       });
     }
 
+    let currentOpenDay = null;
+
     function showMessageModal(day, messages) {
       modalDayTitle.textContent = `Day ${day + 1}`;
       modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
@@ -103,22 +124,20 @@
       modal.classList.remove("hidden");
 
       currentOpenDay = day;
+      replyInput.value = "";
+      replyText.textContent = "";
+      savedReply.classList.add("hidden");
 
-      // Load reply if exists
-      const replyKey = `reply_day_${day}`;
-      const saved = localStorage.getItem(replyKey);
-
-      if (saved) {
-        replyInput.value = saved;
-        savedReply.classList.remove("hidden");
-        replyText.textContent = saved;
-      } else {
-        replyInput.value = "";
-        savedReply.classList.add("hidden");
-      }
+      // Load reply from Firebase
+      db.ref(`replies/day_${day}`).once("value").then((snapshot) => {
+        const reply = snapshot.val();
+        if (reply) {
+          replyInput.value = reply;
+          replyText.textContent = reply;
+          savedReply.classList.remove("hidden");
+        }
+      });
     }
-
-    let currentOpenDay = null;
 
     sendReplyBtn.addEventListener("click", () => {
       if (currentOpenDay === null) return;
@@ -129,10 +148,13 @@
         return;
       }
 
-      localStorage.setItem(`reply_day_${currentOpenDay}`, reply);
-      replyText.textContent = reply;
-      savedReply.classList.remove("hidden");
-      // Update sidebar if you want to filter or indicate replies in future
+      db.ref(`replies/day_${currentOpenDay}`).set(reply).then(() => {
+        replyText.textContent = reply;
+        savedReply.classList.remove("hidden");
+      }).catch((err) => {
+        alert("Failed to save your reply. Try again!");
+        console.error(err);
+      });
     });
 
     bigEnvelope.addEventListener("click", () => {
@@ -164,13 +186,10 @@
     const today = new Date();
     const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
-    // Load sidebar on page load
     fetch("messages.json")
       .then((res) => res.json())
       .then((messages) => {
         renderSidebar(messages);
-
-        // Change page title if new day message exists
         const hasSeenToday = openedDays.includes(currentDay);
         if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
           document.title = "💌 New! 100 Days With You";
