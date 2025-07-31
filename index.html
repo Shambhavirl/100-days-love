@@ -19,6 +19,12 @@
     <aside class="sidebar">
       <h2>Opened Days</h2>
       <ul id="opened-days"></ul>
+      <div id="notification-badge" style="margin-top:10px; color:#a83279; font-weight:bold;"></div>
+
+      <section class="spotify-blend">
+        <h3>Our Spotify Blend 🎶</h3>
+        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/YOUR_SPOTIFY_BLEND_CODE" width="100%" height="152" frameBorder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+      </section>
     </aside>
 
     <div class="content">
@@ -56,7 +62,6 @@
   </div>
 
   <script>
-    // 🔥 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCmQCgyOSPo5eH1P01J-eezbHYKvXFAwl8",
       authDomain: "letters-adit.firebaseapp.com",
@@ -68,7 +73,6 @@
       measurementId: "G-D6SKKCBCN6"
     };
 
-    // 🔌 Firebase Init
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -79,8 +83,8 @@
     const closeModalBtn = document.getElementById("close-modal");
     const memeImg = document.querySelector(".meme-img");
     const openedDaysList = document.getElementById("opened-days");
+    const notificationBadge = document.getElementById("notification-badge");
 
-    const replySection = document.getElementById("reply-section");
     const replyInput = document.getElementById("reply-input");
     const sendReplyBtn = document.getElementById("send-reply");
     const savedReply = document.getElementById("saved-reply");
@@ -93,6 +97,8 @@
       if (!openedDays.includes(i)) openedDays.push(i);
     }
     localStorage.setItem(storageKey, JSON.stringify(openedDays));
+
+    let currentOpenDay = null;
 
     function saveOpenedDay(day) {
       if (!openedDays.includes(day)) {
@@ -108,14 +114,22 @@
         const li = document.createElement("li");
         li.textContent = `Day ${day + 1}`;
         li.className = "mini-envelope";
+
+        db.ref(`replies/day_${day}`).once("value").then((snapshot) => {
+          if (snapshot.exists()) {
+            li.classList.add("has-reply");
+            li.textContent += " 💬";
+            notificationBadge.textContent = "✨ New Reply! ✨";
+          }
+        });
+
         li.addEventListener("click", () => {
           showMessageModal(day, messages);
         });
+
         openedDaysList.appendChild(li);
       });
     }
-
-    let currentOpenDay = null;
 
     function showMessageModal(day, messages) {
       modalDayTitle.textContent = `Day ${day + 1}`;
@@ -128,7 +142,6 @@
       replyText.textContent = "";
       savedReply.classList.add("hidden");
 
-      // Load reply from Firebase
       db.ref(`replies/day_${day}`).once("value").then((snapshot) => {
         const reply = snapshot.val();
         if (reply) {
@@ -144,15 +157,16 @@
 
       const reply = replyInput.value.trim();
       if (reply.length === 0) {
-        alert("Please type something before sending your reply!");
+        alert("typing something before you reply");
         return;
       }
 
       db.ref(`replies/day_${currentOpenDay}`).set(reply).then(() => {
         replyText.textContent = reply;
         savedReply.classList.remove("hidden");
+        notificationBadge.textContent = "";
       }).catch((err) => {
-        alert("Failed to save your reply. Try again!");
+        alert("sorry babe the reply ain't saving for some reason, try again?");
         console.error(err);
       });
     });
@@ -192,9 +206,9 @@
         renderSidebar(messages);
         const hasSeenToday = openedDays.includes(currentDay);
         if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
-          document.title = "💌 New! 100 Days With You";
+          document.title = "💌 New! Days With You";
         } else {
-          document.title = "100 Days With You 💟 (and more obviously)";
+          document.title = "Days With You 💟";
         }
       })
       .catch((err) => {
@@ -202,5 +216,12 @@
         console.error(err);
       });
   </script>
+
+  <style>
+    .has-reply {
+      color: #a83279;
+      font-weight: bold;
+    }
+  </style>
 </body>
 </html>
