@@ -92,11 +92,14 @@
    let openedDays = [];
 
 // We'll fetch messages.json and use its keys to build the sidebar
-fetch("messages.json")
+fetch("messages.json?" + Date.now()) // cache busting!
   .then((res) => res.json())
   .then((messages) => {
-    // Get all message days (0–99) that exist
-    openedDays = Object.keys(messages).map(day => parseInt(day)).sort((a, b) => a - b);
+    // Filter only the days up to today
+    openedDays = Object.keys(messages)
+      .map(day => parseInt(day))
+      .filter(day => day <= currentDay)
+      .sort((a, b) => a - b);
 
     // Get replies from Firebase
     db.ref("replies").once("value").then((snapshot) => {
@@ -111,7 +114,6 @@ fetch("messages.json")
       }
     });
 
-    // Save opened days to localStorage in case you still want it there
     localStorage.setItem(storageKey, JSON.stringify(openedDays));
   })
   .catch((err) => {
@@ -230,3 +232,4 @@ fetch("messages.json")
   </script>
 </body>
 </html>
+
