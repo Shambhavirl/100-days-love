@@ -1,177 +1,192 @@
-/* Reset */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* style.css */
 
 body {
   font-family: 'Raleway', sans-serif;
-  background-color: #fff8f4;
+  margin: 0;
+  padding: 0;
+  background-color: #fffafc;
   color: #333;
-  padding: 1rem;
 }
 
 .main-container {
   display: flex;
   flex-direction: row;
-  max-width: 1200px;
-  margin: auto;
-  gap: 1rem;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
-  width: 30%;
-  max-height: 90vh;
+  background-color: #fce4ec;
+  padding: 20px;
+  width: 200px;
   overflow-y: auto;
-  border-right: 2px dashed #ffb6c1;
-  padding-right: 1rem;
+  border-right: 2px solid #f8bbd0;
 }
 
 .sidebar h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  margin-top: 0;
+  font-weight: 700;
+  color: #c2185b;
 }
 
 #opened-days {
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .mini-envelope {
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  background-color: #ffe4ec;
+  background-color: #f8bbd0;
+  padding: 10px;
+  margin-bottom: 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .mini-envelope:hover {
-  background-color: #ffc2d1;
+  background-color: #f48fb1;
 }
 
 .mini-envelope.replied {
-  font-weight: bold;
-  color: #ff3366;
+  border: 2px solid #880e4f;
+  background-color: #ffeef3;
 }
 
 .content {
-  width: 70%;
+  flex: 1;
+  padding: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 #big-envelope-container {
-  text-align: center;
-  margin: 2rem 0;
+  position: relative;
+  margin-top: 20px;
 }
 
 #big-envelope {
-  width: 100px;
+  width: 150px;
   cursor: pointer;
 }
 
+#notification-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #ff4081;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 50%;
+  font-size: 16px;
+  display: none;
+  animation: pop 0.4s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(0); }
+  80% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
 #day-message {
-  margin-top: 1rem;
+  margin-top: 30px;
+  max-width: 500px;
+}
+
+.hidden {
+  display: none;
 }
 
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-}
-
-.modal.hidden {
-  display: none;
 }
 
 .modal-content {
-  background: #fff;
+  background: white;
   border-radius: 12px;
-  padding: 2rem;
+  padding: 20px;
   width: 90%;
   max-width: 500px;
   position: relative;
+  text-align: left;
 }
 
 .meme-img {
   width: 100%;
-  max-height: 150px;
-  object-fit: contain;
-  margin-bottom: 1rem;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 #close-modal {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 10px;
+  right: 10px;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 20px;
   cursor: pointer;
 }
 
-#reply-section {
-  margin-top: 1rem;
-}
-
-#reply-input {
+#reply-section textarea {
   width: 100%;
-  height: 80px;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  border-radius: 6px;
+  min-height: 80px;
+  margin-top: 10px;
+  padding: 10px;
   border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
 }
 
-#send-reply {
-  background-color: #ff6699;
+#reply-section button {
+  margin-top: 10px;
+  background-color: #ec407a;
   color: white;
-  padding: 0.5rem 1rem;
   border: none;
+  padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
 }
 
-#send-reply:hover {
-  background-color: #ff3366;
+#reply-section button:hover {
+  background-color: #d81b60;
 }
 
 #saved-reply {
-  margin-top: 1rem;
-  background-color: #fff0f5;
-  padding: 1rem;
+  margin-top: 15px;
+  background: #fce4ec;
+  padding: 10px;
   border-radius: 6px;
+  border: 1px solid #f8bbd0;
 }
 
-.notification-badge {
+iframe#spotify-embed {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background-color: #ff3366;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 50%;
-  font-size: 1.2rem;
-  z-index: 1100;
-}
-
-.spotify-section {
-  margin-top: 2rem;
-  text-align: center;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
 }
 
 @media (max-width: 768px) {
   .main-container {
     flex-direction: column;
   }
-  .sidebar,
-  .content {
+  .sidebar {
     width: 100%;
+    border-right: none;
+    border-bottom: 2px solid #f8bbd0;
+  }
+  .content {
+    padding: 10px;
   }
 }
