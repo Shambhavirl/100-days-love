@@ -29,8 +29,7 @@
           src="https://open.spotify.com/embed/playlist/37i9dQZF1EJMnacOonuiK5"
           width="100%" height="152" frameborder="0"
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy">
-        </iframe>
+          loading="lazy"></iframe>
       </div>
     </div>
   </div>
@@ -56,9 +55,12 @@
     </div>
   </div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+
   <script>
+    // ---------- FIREBASE CONFIG ----------
     const firebaseConfig = {
       apiKey: "AIzaSyCmQCgyOSPo5eH1P01J-eezbHYKvXFAwl8",
       authDomain: "letters-adit.firebaseapp.com",
@@ -69,10 +71,10 @@
       appId: "1:356670647591:web:35f8d27862408a793e8d02",
       measurementId: "G-D6SKKCBCN6"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // ---------- DOM ----------
     const bigEnvelope = document.getElementById("big-envelope");
     const modal = document.getElementById("message-modal");
     const modalDayTitle = document.getElementById("modal-day-title");
@@ -87,69 +89,62 @@
     const savedReply = document.getElementById("saved-reply");
     const replyText = document.getElementById("reply-text");
 
+    // ---------- STATE ----------
     const startDate = new Date("2025-06-12T00:00:00");
+    const msPerDay = 1000 * 60 * 60 * 24;
     const today = new Date();
-    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    const currentDay = Math.floor((today - startDate) / msPerDay);
 
     const storageKey = "ad_love_notes_opened";
-    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+    let openedDays = JSON.parse(localStorage.getItem(storageKey) || "[]");
     let firebaseReplies = {};
-    let messagesData = {};
+    let messagesData = {};     // numeric keyed {0: "...", 1: "..."}
+    let daysList = [];         // sorted numeric list of available days
     let currentOpenDay = null;
 
-    // Load everything
-    fetch("messages.json")
-      .then(res => res.json())
-      .then(messages => {
-        messagesData = messages;
-        return db.ref("replies").once("value");
-      })
-      .then(snapshot => {
-        firebaseReplies = snapshot.val() || {};
-        renderSidebar();
+    // ---------- HELPERS ----------
+    function getFirstLine(text) {
+      if (!text) return "No message yet";
+      return String(text).split(/\r?\n/)[0].trim();
+    }
 
-        // Auto-open today's letter if it exists and wasn't opened before
-        if (messagesData[currentDay] && !openedDays.includes(currentDay)) {
-          showMessageModal(currentDay);
-          bigEnvelope.src = "assets/envelope_open.png";
-          saveOpenedDay(currentDay);
-        }
-      })
-      .catch(err => {
-        console.error("Error loading messages:", err);
-        alert("Couldn't load love letters 😭");
-      });
-
-    function saveOpenedDay(day) {
-      if (!openedDays.includes(day)) {
+    function saveOpenedDay(day){
+      day = Number(day);
+      if (!openedDays.includes(day)){
         openedDays.push(day);
+        openedDays.sort((a,b)=>a-b);
         localStorage.setItem(storageKey, JSON.stringify(openedDays));
         renderSidebar();
       }
     }
 
-    function renderSidebar() {
+    function renderSidebar(){
       openedDaysList.innerHTML = "";
       let unreadCount = 0;
 
-      openedDays.sort((a,b) => a - b).forEach(day => {
+      daysList.forEach(day => {
         const li = document.createElement("li");
         li.className = "mini-envelope";
-        li.innerHTML = `<strong>Day ${day + 1}</strong>`;
+        if (openedDays.includes(day)) li.classList.add("opened");
 
-        const letterText = messagesData[day];
-        if (letterText) {
-          const firstLine = letterText.split("\\n")[0];
-          const snippet = document.createElement("div");
-          snippet.className = "day-snippet";
-          snippet.textContent = firstLine;
-          li.appendChild(snippet);
-        }
+        const title = document.createElement("div");
+        title.className = "day-title";
+        title.innerHTML = `<strong>Day ${day + 1}</strong>`;
+        li.appendChild(title);
+
+        const snippet = document.createElement("div");
+        snippet.className = "day-snippet";
+        snippet.textContent = getFirstLine(messagesData[day]);
+        li.appendChild(snippet);
 
         const reply = firebaseReplies[`day_${day}`];
-        if (reply && reply.text) {
+        if (reply && reply.text){
           li.classList.add("replied");
-          li.innerHTML += " 💬";
+          // small inline badge element — styling via CSS (.mini-envelope.replied ...)
+          const badge = document.createElement("span");
+          badge.className = "reply-badge";
+          badge.textContent = " 💬";
+          title.appendChild(badge);
           unreadCount++;
         }
 
@@ -162,7 +157,7 @@
         openedDaysList.appendChild(li);
       });
 
-      if (unreadCount > 0) {
+      if (unreadCount > 0){
         notificationBadge.classList.remove("hidden");
         notificationBadge.textContent = `💌 ${unreadCount}`;
       } else {
@@ -170,16 +165,16 @@
       }
     }
 
-    function showMessageModal(day) {
+    function showMessageModal(day){
+      day = Number(day);
+      currentOpenDay = day;
       modalDayTitle.textContent = `Day ${day + 1}`;
-      modalDayText.innerHTML = (messagesData[day] || "Message not found yet 💌").replace(/\\n/g, "<br>");
+      modalDayText.innerHTML = (messagesData[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
       memeImg.style.display = (day === 0) ? "block" : "none";
       modal.classList.remove("hidden");
 
-      currentOpenDay = day;
-
       const replyObj = firebaseReplies[`day_${day}`];
-      if (replyObj && replyObj.text) {
+      if (replyObj && replyObj.text){
         replyInput.value = replyObj.text;
         replyText.textContent = replyObj.text;
         savedReply.classList.remove("hidden");
@@ -189,44 +184,86 @@
       }
     }
 
+    // ---------- LOAD FLOW ----------
+    // 1) fetch messages.json
+    // 2) then load replies from firebase
+    // 3) render full sidebar (all days from messages.json)
+    fetch("messages.json")
+      .then(res => {
+        if (!res.ok) throw new Error("Could not fetch messages.json — check path and server");
+        return res.json();
+      })
+      .then(json => {
+        // normalize numeric keys
+        messagesData = {};
+        Object.keys(json).forEach(k => {
+          const idx = Number(k);
+          messagesData[idx] = json[k];
+        });
+        daysList = Object.keys(messagesData).map(Number).sort((a,b)=>a-b);
+        return db.ref("replies").once("value");
+      })
+      .then(snapshot => {
+        firebaseReplies = snapshot.val() || {};
+        renderSidebar();
+
+        // auto-open today's letter if exists and wasn't opened before
+        if (messagesData[currentDay] && !openedDays.includes(currentDay)){
+          showMessageModal(currentDay);
+          bigEnvelope.src = "assets/envelope_open.png";
+          saveOpenedDay(currentDay);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Couldn't load letters. Open console. If you're testing locally, run a local server (e.g. `python -m http.server`).");
+      });
+
+    // ---------- REPLIES ----------
     sendReplyBtn.addEventListener("click", () => {
       if (currentOpenDay === null) return;
-
       const reply = replyInput.value.trim();
-      if (!reply.length) {
+      if (!reply.length){
         alert("Please type something before sending your reply!");
         return;
       }
 
       const replyRef = db.ref(`replies/day_${currentOpenDay}`);
-      replyRef.set({
-        text: reply,
-        timestamp: new Date().toISOString(),
-      });
-
-      replyText.textContent = reply;
-      savedReply.classList.remove("hidden");
+      const payload = { text: reply, timestamp: new Date().toISOString() };
+      replyRef.set(payload)
+        .then(() => {
+          firebaseReplies[`day_${currentOpenDay}`] = payload;
+          replyText.textContent = reply;
+          savedReply.classList.remove("hidden");
+          renderSidebar();
+        })
+        .catch(err => {
+          console.error("Failed to save reply", err);
+          alert("Could not save reply — check your connection.");
+        });
     });
 
+    // ---------- ENVELOPE / MODAL ----------
     bigEnvelope.addEventListener("click", () => {
-      if (messagesData[currentDay]) {
+      if (messagesData[currentDay]){
         showMessageModal(currentDay);
         bigEnvelope.src = "assets/envelope_open.png";
         saveOpenedDay(currentDay);
+        return;
+      }
+      // fallback: open first available day
+      const first = daysList[0];
+      if (first !== undefined){
+        showMessageModal(first);
+        bigEnvelope.src = "assets/envelope_open.png";
+        saveOpenedDay(first);
       } else {
-        alert("No love letter for today yet 💌");
+        alert("No letters found yet 💌");
       }
     });
 
-    closeModalBtn.addEventListener("click", () => {
-      modal.classList.add("hidden");
-    });
-
-    modal.addEventListener("click", e => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-      }
-    });
+    closeModalBtn.addEventListener("click", () => modal.classList.add("hidden"));
+    modal.addEventListener("click", e => { if (e.target === modal) modal.classList.add("hidden"); });
   </script>
 </body>
 </html>
