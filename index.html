@@ -29,8 +29,7 @@
           src="https://open.spotify.com/embed/playlist/37i9dQZF1EJMnacOonuiK5"
           width="100%" height="152" frameborder="0"
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          >
+          loading="lazy">
         </iframe>
       </div>
     </div>
@@ -93,32 +92,31 @@
     const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
     const storageKey = "ad_love_notes_opened";
-    let openedDays = [];
-
+    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
     let firebaseReplies = {};
+    let messagesData = {};
     let currentOpenDay = null;
 
-    // Fetch messages and replies, then init sidebar + open today message if any
+    // Load everything
     fetch("messages.json")
-      .then((res) => res.json())
-      .then((messages) => {
-        openedDays = Object.keys(messages).map(day => parseInt(day)).sort((a,b) => a - b);
+      .then(res => res.json())
+      .then(messages => {
+        messagesData = messages;
+        return db.ref("replies").once("value");
+      })
+      .then(snapshot => {
+        firebaseReplies = snapshot.val() || {};
+        renderSidebar();
 
-        db.ref("replies").once("value").then(snapshot => {
-          firebaseReplies = snapshot.val() || {};
-          renderSidebar(messages);
-
-          if (messages[currentDay]) {
-            showMessageModal(currentDay, messages);
-            bigEnvelope.src = "assets/envelope_open.png";
-            saveOpenedDay(currentDay);
-          }
-        });
-
-        localStorage.setItem(storageKey, JSON.stringify(openedDays));
+        // Auto-open today's letter if it exists and wasn't opened before
+        if (messagesData[currentDay] && !openedDays.includes(currentDay)) {
+          showMessageModal(currentDay);
+          bigEnvelope.src = "assets/envelope_open.png";
+          saveOpenedDay(currentDay);
+        }
       })
       .catch(err => {
-        console.error("Error loading messages I HATE CODING", err);
+        console.error("Error loading messages:", err);
         alert("Couldn't load love letters 😭");
       });
 
@@ -126,27 +124,37 @@
       if (!openedDays.includes(day)) {
         openedDays.push(day);
         localStorage.setItem(storageKey, JSON.stringify(openedDays));
+        renderSidebar();
       }
     }
 
-    function renderSidebar(messages) {
+    function renderSidebar() {
       openedDaysList.innerHTML = "";
       let unreadCount = 0;
 
       openedDays.sort((a,b) => a - b).forEach(day => {
         const li = document.createElement("li");
-        li.textContent = `Day ${day + 1}`;
         li.className = "mini-envelope";
+        li.innerHTML = `<strong>Day ${day + 1}</strong>`;
+
+        const letterText = messagesData[day];
+        if (letterText) {
+          const firstLine = letterText.split("\\n")[0];
+          const snippet = document.createElement("div");
+          snippet.className = "day-snippet";
+          snippet.textContent = firstLine;
+          li.appendChild(snippet);
+        }
 
         const reply = firebaseReplies[`day_${day}`];
         if (reply && reply.text) {
           li.classList.add("replied");
-          li.textContent += " 💬";
+          li.innerHTML += " 💬";
           unreadCount++;
         }
 
         li.addEventListener("click", () => {
-          showMessageModal(day, messages);
+          showMessageModal(day);
           bigEnvelope.src = "assets/envelope_open.png";
           saveOpenedDay(day);
         });
@@ -162,9 +170,9 @@
       }
     }
 
-    function showMessageModal(day, messages) {
+    function showMessageModal(day) {
       modalDayTitle.textContent = `Day ${day + 1}`;
-      modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+      modalDayText.innerHTML = (messagesData[day] || "Message not found yet 💌").replace(/\\n/g, "<br>");
       memeImg.style.display = (day === 0) ? "block" : "none";
       modal.classList.remove("hidden");
 
@@ -201,17 +209,13 @@
     });
 
     bigEnvelope.addEventListener("click", () => {
-      fetch("messages.json")
-        .then(res => res.json())
-        .then(messages => {
-          db.ref("replies").once("value").then(snapshot => {
-            firebaseReplies = snapshot.val() || {};
-            bigEnvelope.src = "assets/envelope_open.png";
-            saveOpenedDay(currentDay);
-            renderSidebar(messages);
-            showMessageModal(currentDay, messages);
-          });
-        });
+      if (messagesData[currentDay]) {
+        showMessageModal(currentDay);
+        bigEnvelope.src = "assets/envelope_open.png";
+        saveOpenedDay(currentDay);
+      } else {
+        alert("No love letter for today yet 💌");
+      }
     });
 
     closeModalBtn.addEventListener("click", () => {
@@ -226,4 +230,3 @@
   </script>
 </body>
 </html>
-
