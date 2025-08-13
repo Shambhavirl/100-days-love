@@ -115,14 +115,21 @@
 
   // Typewriter effect
   let i = 0;
-  function typeWriter() {
-    if (i < fullText.length) {
-      modalDayText.innerHTML += fullText[i];
+ function typeWriter(element, text, delay = 30) {
+  element.innerHTML = ''; // clear previous
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      element.innerHTML += text[i];
       i++;
-      setTimeout(typeWriter, 25); // adjust speed here
+      setTimeout(type, delay);
     }
   }
-  typeWriter();
+  type();
+}
+
+modalDayText.innerHTML = ''; // clear old text
+typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>"));
 
   // Load saved reply from localStorage
   const replyKey = `reply_day_${day}`;
@@ -201,5 +208,6 @@
 </script>
 </body>
 </html>
+
 
 
