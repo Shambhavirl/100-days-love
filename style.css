@@ -1,3 +1,4 @@
+/* General Page Styling */
 body {
   margin: 0;
   padding: 0;
@@ -10,6 +11,7 @@ body {
   min-height: 100vh;
 }
 
+/* Main Container */
 .main-container {
   display: flex;
   width: 90%;
@@ -20,12 +22,15 @@ body {
   background: #ffffff;
 }
 
+/* Sidebar */
 .sidebar {
   background-color: #f1e4ff;
   padding: 20px;
   width: 200px;
   box-shadow: inset -1px 0 0 #d6b3ff;
   border-right: 2px solid #e5c8ff;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar h2 {
@@ -34,10 +39,14 @@ body {
   color: #5f3d83;
 }
 
+/* Scrollable list of opened letters */
 #opened-days {
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+  max-height: calc(100vh - 100px);
 }
 
 .mini-envelope {
@@ -55,10 +64,14 @@ body {
   background-color: #e6d3ff;
 }
 
+/* Main Content */
 .content {
   flex-grow: 1;
   padding: 40px 30px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 h1 {
@@ -84,14 +97,14 @@ h1 {
   transform: scale(1.05);
 }
 
+/* Letter Message Box */
 #day-message {
   background-color: #f6eaff;
   padding: 20px;
   border-radius: 20px;
   margin-top: 20px;
   max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   animation: fadeIn 0.6s ease;
   color: #4b2d73;
@@ -112,6 +125,7 @@ h1 {
   }
 }
 
+/* Responsive for Mobile */
 @media screen and (max-width: 768px) {
   .main-container {
     flex-direction: column;
@@ -123,6 +137,8 @@ h1 {
     text-align: center;
     border-right: none;
     border-bottom: 2px solid #e5c8ff;
+    max-height: 200px;
+    overflow-y: auto;
   }
 
   .content {
@@ -130,6 +146,7 @@ h1 {
   }
 }
 
+/* Modal Styling */
 .modal {
   position: fixed;
   top: 0;
@@ -142,7 +159,6 @@ h1 {
   align-items: center;
   z-index: 1000;
 }
-
 
 .modal.hidden {
   display: none;
@@ -188,7 +204,6 @@ h1 {
   font-size: 1rem;
 }
 
-
 #close-modal {
   position: absolute;
   top: 15px;
@@ -204,12 +219,7 @@ h1 {
   color: #6c42a7;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  font-weight: 700;
-  margin-bottom: 15px;
-}
-
+/* Reply Section */
 #reply-section {
   margin-top: 25px;
   padding-top: 15px;
