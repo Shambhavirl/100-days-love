@@ -2,150 +2,292 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>modern day love letters hehe</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Love Letters — for Adit</title>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sacramento&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <div id="message-modal" class="modal hidden">
-    <div class="modal-content">
-      <img src="assets/GKmeme.jpg" alt="Cute meme" class="meme-img" />
-      <div class="text">
-        <button id="close-modal" aria-label="Close message">✖</button>
-        <h3 id="modal-day-title"></h3>
-        <p id="modal-day-text"></p>
+  <!-- Neon Cursor -->
+  <div id="neon-cursor"></div>
+
+  <!-- App Shell -->
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="heart">💌</span>
+        <span class="brand-text">100 Days</span>
       </div>
-    </div>
+      <div class="toggle-wrap">
+        <button id="themeToggle" aria-label="Toggle dark mode" class="toggle">
+          <span class="toggle-dot"></span>
+        </button>
+        <span class="toggle-label">Dark</span>
+      </div>
+      <div class="envelopes" id="envelopeList" aria-label="Letters list"></div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Toggle letters list">☰</button>
+        <h1 id="title">Open an envelope</h1>
+      </header>
+
+      <section class="letter-card">
+        <div class="envelope-stage">
+          <img id="envelopeImg" src="assets/envelope_closed.png" alt="Envelope" />
+        </div>
+        <article id="letter" class="paper" aria-live="polite"></article>
+      </section>
+    </main>
   </div>
 
-  <aside class="sidebar">
-    <h2>Opened Days</h2>
-    <ul id="opened-days"></ul>
-  </aside>
-
-  <div class="content">
-    <h1>100 Days With You 💟 (and more obviously)</h1>
-    <div id="big-envelope-container">
-      <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
-    </div>
-
-    <div id="day-message" class="hidden">
-      <h3 id="day-title"></h3>
-      <p id="day-text"></p>
-    </div>
-  </div>
+  <!-- Mobile bottom nav renders the same envelopes -->
+  <nav class="bottom-nav" id="bottomNav" aria-label="Letters (mobile)"></nav>
 
   <script>
-    const bigEnvelope = document.getElementById("big-envelope");
-    const modal = document.getElementById("message-modal");
-    const modalDayTitle = document.getElementById("modal-day-title");
-    const modalDayText = document.getElementById("modal-day-text");
-    const closeModalBtn = document.getElementById("close-modal");
-    const memeImg = document.querySelector(".meme-img");
-    const openedDaysList = document.getElementById("opened-days");
+    /*************** CONSTANTS ***************/
+    const TZ = "America/Indiana/Indianapolis";
+    const ACCENT = "#a07ffb";
 
-    const storageKey = "ad_love_notes_opened";
-    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+    /*************** UTIL: Timezone date helpers ***************/
+    function zonedToday(tz = TZ) {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(new Date());
+      const get = k => parts.find(p => p.type === k).value;
+      return `${get('year')}-${get('month')}-${get('day')}`; // YYYY-MM-DD
+    }
+    function isUnlocked(releaseDateStr) {
+      return zonedToday() >= releaseDateStr;
+    }
 
-// Force Day 6, 7, 8, and 9 to appear
-if (!openedDays.includes(5)) openedDays.push(5); // Day 6
-if (!openedDays.includes(6)) openedDays.push(6); // Day 7
-if (!openedDays.includes(7)) openedDays.push(7); // Day 8
-if (!openedDays.includes(8)) openedDays.push(8); // Day 9
-if (!openedDays.includes(9)) openedDays.push(9); // Day 10
-if (!openedDays.includes(17)) openedDays.push(17); // Day 17
-if (!openedDays.includes(19)) openedDays.push(19); // Day 19
-if (!openedDays.includes(21)) openedDays.push(21); // Day 21
-    
-localStorage.setItem(storageKey, JSON.stringify(openedDays));
+    /*************** State ***************/
+    let MESSAGES = [];
+    let currentId = null;
+    let typingAbort = null;
 
+    /*************** DOM *****************/
+    const envelopeList = document.getElementById('envelopeList');
+    const bottomNav = document.getElementById('bottomNav');
+    const letterEl = document.getElementById('letter');
+    const titleEl = document.getElementById('title');
+    const envelopeImg = document.getElementById('envelopeImg');
+    const themeToggle = document.getElementById('themeToggle');
+    const menuBtn = document.getElementById('menuBtn');
+    const sidebar = document.getElementById('sidebar');
 
+    /*************** Theme ***************/
+    (function initTheme(){
+      const saved = localStorage.getItem('theme') || 'light';
+      document.documentElement.dataset.theme = saved;
+      if (saved === 'dark') themeToggle.classList.add('on');
+    })();
+    themeToggle.addEventListener('click', () => {
+      const next = (document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('theme', next);
+      themeToggle.classList.toggle('on', next === 'dark');
+    });
 
-    const startDate = new Date("2025-06-12T00:00:00");
-    const today = new Date();
-    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    /*************** Sidebar (mobile) ***************/
+    menuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
 
-    function saveOpenedDay(day) {
-      if (!openedDays.includes(day)) {
-        openedDays.push(day);
-        localStorage.setItem(storageKey, JSON.stringify(openedDays));
+    /*************** Custom Neon Cursor ***************/
+    (function cursor(){
+      const c = document.getElementById('neon-cursor');
+      let x = 0, y = 0, tx = 0, ty = 0;
+      document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+      function loop(){
+        x += (tx - x) * 0.2; y += (ty - y) * 0.2;
+        c.style.transform = `translate(${x}px, ${y}px)`;
+        requestAnimationFrame(loop);
+      }
+      loop();
+    })();
+
+    /*************** Typewriter ***************/
+    async function typeText(el, text, speed = 18) {
+      // Abort previous typing if needed
+      if (typingAbort) typingAbort.aborted = true;
+      typingAbort = { aborted: false };
+
+      el.innerHTML = "";
+      const lines = text.split(/\r?\n/);
+      for (let i = 0; i < lines.length; i++) {
+        if (typingAbort.aborted) return;
+        const p = document.createElement('p');
+        el.appendChild(p);
+        const line = lines[i];
+        for (let j = 0; j < line.length; j++) {
+          if (typingAbort.aborted) return;
+          p.textContent += line[j];
+          await new Promise(r => setTimeout(r, speed));
+        }
+        if (i < lines.length - 1) {
+          await new Promise(r => setTimeout(r, speed * 8));
+        }
       }
     }
 
-    function renderSidebar(messages) {
-      openedDaysList.innerHTML = "";
+    /*************** Render Envelopes ***************/
+    function renderEnvelopes() {
+      const container = document.createElement('div');
+      container.className = 'envelope-grid';
 
-      openedDays.sort((a, b) => a - b).forEach((day) => {
-        const li = document.createElement("li");
-        li.textContent = `Day ${day + 1}`;
-        li.className = "mini-envelope";
-        li.addEventListener("click", () => {
-          showMessageModal(day, messages);
-        });
-        openedDaysList.appendChild(li);
-      });
-    }
+      MESSAGES.forEach(msg => {
+        const unlocked = isUnlocked(msg.releaseDate);
+        const item = document.createElement('button');
+        item.className = `env ${unlocked ? 'unlocked' : 'locked'}`;
+        item.setAttribute('data-id', msg.id);
+        item.setAttribute('aria-label', `${msg.title} ${unlocked ? 'unlocked' : 'locked'}`);
 
-function showMessageModal(day, messages) {
-  modalDayTitle.textContent = `Day ${day + 1}`;
-  modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-
-  memeImg.style.display = (day === 0) ? "block" : "none";
-  modal.classList.remove("hidden");
-}
-
-
-    bigEnvelope.addEventListener("click", () => {
-      if (currentDay < 0 || currentDay > 99) return;
-
-      fetch("messages.json")
-        .then((response) => response.json())
-        .then((messages) => {
-          bigEnvelope.src = "assets/envelope_open.png";
-          saveOpenedDay(currentDay);
-          renderSidebar(messages);
-          showMessageModal(currentDay, messages);
-        });
-    });
-
-    closeModalBtn.addEventListener("click", () => {
-      modal.classList.add("hidden");
-    });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-      }
-    });
-
-    // Ensure Day 1 is always added to sidebar
-    if (!openedDays.includes(0)) {
-      openedDays.push(0);
-      localStorage.setItem(storageKey, JSON.stringify(openedDays));
-    }
-
-    // Load sidebar immediately on page load
-    fetch("messages.json")
-      .then((res) => res.json())
-      .then((messages) => {
-        renderSidebar(messages);
-      });
-
-    const hasSeenToday = openedDays.includes(currentDay);
-
-    fetch("messages.json")
-      .then(res => res.json())
-      .then(messages => {
-        if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
-          document.title = "💌 New! 100 Days With You";
+        item.innerHTML = `
+          <img alt="" src="assets/${unlocked ? 'envelope_open.png' : 'envelope_closed.png'}"/>
+          <span>${msg.short || msg.title}</span>
+        `;
+        if (unlocked) {
+          item.addEventListener('click', () => openLetter(msg.id));
         } else {
-          document.title = "100 Days With You 💟(and more obviously)";
+          item.disabled = true;
+        }
+        container.appendChild(item);
+      });
+
+      envelopeList.innerHTML = "";
+      envelopeList.appendChild(container);
+
+      // Also mirror to bottom nav for phones
+      bottomNav.innerHTML = "";
+      const navRow = container.cloneNode(true);
+      // Rebind events on the cloned nodes
+      [...navRow.querySelectorAll('.env')].forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        const msg = MESSAGES.find(m => String(m.id) === String(id));
+        if (btn.classList.contains('unlocked')) {
+          btn.disabled = false;
+          btn.addEventListener('click', () => openLetter(msg.id));
         }
       });
+      bottomNav.appendChild(navRow);
+    }
+
+    /*************** Envelope Animation + Open ***************/
+    async function openLetter(id) {
+      const msg = MESSAGES.find(m => m.id === id);
+      if (!msg) return;
+
+      // Close sidebar on mobile
+      sidebar.classList.remove('open');
+
+      // Envelope animation: close → shake → open
+      envelopeImg.classList.remove('open');
+      envelopeImg.src = "assets/envelope_closed.png";
+      envelopeImg.classList.add('wiggle');
+      await new Promise(r => setTimeout(r, 420));
+      envelopeImg.classList.remove('wiggle');
+      envelopeImg.classList.add('flip');
+      await new Promise(r => setTimeout(r, 220));
+      envelopeImg.src = "assets/envelope_open.png";
+      envelopeImg.classList.remove('flip');
+      envelopeImg.classList.add('open');
+      await new Promise(r => setTimeout(r, 200));
+
+      // Update title & type text
+      titleEl.textContent = msg.title;
+      // If you included optional attachments (like images) we append them after typing
+      await typeText(letterEl, msg.text);
+
+      if (Array.isArray(msg.attachments)) {
+        for (const a of msg.attachments) {
+          if (a.type === 'image' && a.src) {
+            const img = document.createElement('img');
+            img.src = a.src;
+            img.alt = a.alt || "";
+            img.className = 'inline-img';
+            letterEl.appendChild(img);
+          }
+        }
+      }
+
+      currentId = id;
+    }
+
+    /*************** Init ***************/
+    async function init() {
+      try {
+        const res = await fetch('messages.json', { cache: 'no-store' });
+        MESSAGES = await res.json();
+
+        // Sort by releaseDate ascending, then id
+        MESSAGES.sort((a,b) => a.releaseDate.localeCompare(b.releaseDate) || (a.id - b.id));
+
+        renderEnvelopes();
+
+        // Auto-open the newest unlocked letter on load (nice touch)
+        const unlocked = MESSAGES.filter(m => isUnlocked(m.releaseDate));
+        if (unlocked.length) {
+          openLetter(unlocked[unlocked.length - 1].id);
+        } else {
+          titleEl.textContent = "Soon. Midnight in Indy 💜";
+          letterEl.innerHTML = "<p>The next envelope unlocks at midnight (Indianapolis time). I’m literally counting the minutes.</p>";
+        }
+
+        // Recompute at next Indy midnight without refreshing page
+        scheduleNextUnlockCheck();
+      } catch (e) {
+        console.error(e);
+        titleEl.textContent = "Couldn’t load letters";
+        letterEl.textContent = "Double-check messages.json exists and is valid JSON.";
+      }
+    }
+
+    function scheduleNextUnlockCheck() {
+      // Compute millis until next midnight in Indianapolis
+      const now = new Date();
+      // Get Indy components for today
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).formatToParts(now);
+      const get = k => parts.find(p => p.type === k).value;
+      const year = Number(get('year')), month = Number(get('month')), day = Number(get('day'));
+      // Create the next midnight in Indy by using that zone's components and letting Date parse as UTC-ish trick:
+      // Build a string with T00:00:00 in Indy tomorrow, then use the Intl format again to get actual UTC diff.
+      // Simpler: increment day by 1 via Date in that zone:
+      const todayIndy = new Date(new Date(`${get('year')}-${get('month')}-${get('day')}T00:00:00`).getTime());
+      // We can't set timezone on Date, so we compute next midnight by adding 24h in Indy terms:
+      // More robust approach: use the zone to get real "tomorrow" date string and parse.
+      const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year:'numeric', month:'2-digit', day:'2-digit' });
+      // Get tomorrow by adding ~36 hours and reformatting, then making a 00:00 in that zone
+      const tomorrowParts = fmt.formatToParts(new Date(now.getTime() + 36*3600*1000));
+      const y2 = tomorrowParts.find(p=>p.type==='year').value;
+      const m2 = tomorrowParts.find(p=>p.type==='month').value;
+      const d2 = tomorrowParts.find(p=>p.type==='day').value;
+      const nextMidStr = `${y2}-${m2}-${d2}T00:00:00`;
+      // Convert "next Indy midnight" to real UTC millis by asking what time that is in the user's locale, using Date.parse:
+      const nextMidLocalGuess = new Date(nextMidStr);
+      // Compute the *current* Indy time in millis via formatting to get offset-ish by comparing labels
+      // Instead of getting too wild, just poll hourly as a simple reliable fallback:
+      const ONE_HOUR = 60*60*1000;
+      setTimeout(()=> {
+        renderEnvelopes();
+        // if a new one unlocked, let’s auto-open latest
+        const unlocked = MESSAGES.filter(m => isUnlocked(m.releaseDate));
+        if (unlocked.length && unlocked[unlocked.length - 1].id !== currentId) {
+          openLetter(unlocked[unlocked.length - 1].id);
+        }
+        scheduleNextUnlockCheck();
+      }, ONE_HOUR);
+    }
+
+    init();
   </script>
 </body>
 </html>
