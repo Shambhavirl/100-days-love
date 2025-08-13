@@ -98,9 +98,11 @@ body.dark {
   border-radius:6px;
   border: calc(var(--pixel-size)) solid rgba(0,0,0,0.06);
   min-height:360px;
-  overflow:auto;
+  max-height: calc(100vh - 200px); /* ensure sidebar fits screen */
+  overflow-y:auto; /* make scrollable */
   font-size:.9rem;
 }
+
 
 .mini-envelope {
   padding:6px 10px;
@@ -204,3 +206,4 @@ body.dark {
 body.dark .toggle-btn::before {
   transform: translateX(25px);
 }
+
