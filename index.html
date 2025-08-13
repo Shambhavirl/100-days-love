@@ -86,9 +86,11 @@
     }
   }
 
-  function renderSidebar(messages) {
-    openedDaysList.innerHTML = "";
-    openedDays.sort((a, b) => a - b).forEach(day => {
+ function renderSidebar(messages) {
+  openedDaysList.innerHTML = "";
+  openedDays.sort((a, b) => a - b).forEach(day => {
+    // Only show if day <= 23 OR message exists for that day
+    if(day <= 23 || (messages[day] && messages[day].trim() !== "")) {
       const li = document.createElement("li");
       li.textContent = `Day ${day + 1}`;
       li.className = "mini-envelope";
@@ -96,8 +98,10 @@
         showMessageModal(day, messages);
       });
       openedDaysList.appendChild(li);
-    });
-  }
+    }
+  });
+}
+
 
   let currentOpenDay = null;
 
@@ -197,4 +201,5 @@
 </script>
 </body>
 </html>
+
 
