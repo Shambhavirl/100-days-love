@@ -86,11 +86,9 @@
     }
   }
 
- function renderSidebar(messages) {
-  openedDaysList.innerHTML = "";
-  openedDays.sort((a, b) => a - b).forEach(day => {
-    // Only show if day <= 23 OR message exists for that day
-    if(day <= 23 || (messages[day] && messages[day].trim() !== "")) {
+  function renderSidebar(messages) {
+    openedDaysList.innerHTML = "";
+    openedDays.sort((a, b) => a - b).forEach(day => {
       const li = document.createElement("li");
       li.textContent = `Day ${day + 1}`;
       li.className = "mini-envelope";
@@ -98,51 +96,30 @@
         showMessageModal(day, messages);
       });
       openedDaysList.appendChild(li);
-    }
-  });
-}
-
+    });
+  }
 
   let currentOpenDay = null;
 
- function showMessageModal(day, messages) {
-  currentOpenDay = day;
-  modalDayTitle.textContent = `Day ${day + 1}`;
-  const fullText = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-  modalDayText.innerHTML = ""; // clear previous content
-  memeImg.style.display = (day === 0) ? "block" : "none";
-  modal.classList.remove("hidden");
+  function showMessageModal(day, messages) {
+    currentOpenDay = day;
+    modalDayTitle.textContent = `Day ${day + 1}`;
+    modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+    memeImg.style.display = (day === 0) ? "block" : "none";
+    modal.classList.remove("hidden");
 
-  // Typewriter effect
-  let i = 0;
- function typeWriter(element, text, delay = 30) {
-  element.innerHTML = ''; // clear previous
-  let i = 0;
-  function type() {
-    if (i < text.length) {
-      element.innerHTML += text[i];
-      i++;
-      setTimeout(type, delay);
+    // Load saved reply from localStorage
+    const replyKey = `reply_day_${day}`;
+    const saved = localStorage.getItem(replyKey);
+    if (saved) {
+      replyInput.value = saved;
+      savedReply.classList.remove("hidden");
+      replyText.textContent = saved;
+    } else {
+      replyInput.value = "";
+      savedReply.classList.add("hidden");
     }
   }
-  type();
-}
-
-modalDayText.innerHTML = ''; // clear old text
-typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>"));
-
-  // Load saved reply from localStorage
-  const replyKey = `reply_day_${day}`;
-  const saved = localStorage.getItem(replyKey);
-  if (saved) {
-    replyInput.value = saved;
-    savedReply.classList.remove("hidden");
-    replyText.textContent = saved;
-  } else {
-    replyInput.value = "";
-    savedReply.classList.add("hidden");
-  }
-}
 
   sendReplyBtn.addEventListener("click", () => {
     if (currentOpenDay === null) return;
@@ -208,6 +185,3 @@ typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace
 </script>
 </body>
 </html>
-
-
-
