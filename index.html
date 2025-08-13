@@ -101,25 +101,37 @@
 
   let currentOpenDay = null;
 
-  function showMessageModal(day, messages) {
-    currentOpenDay = day;
-    modalDayTitle.textContent = `Day ${day + 1}`;
-    modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-    memeImg.style.display = (day === 0) ? "block" : "none";
-    modal.classList.remove("hidden");
+ function showMessageModal(day, messages) {
+  currentOpenDay = day;
+  modalDayTitle.textContent = `Day ${day + 1}`;
+  const fullText = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+  modalDayText.innerHTML = ""; // clear previous content
+  memeImg.style.display = (day === 0) ? "block" : "none";
+  modal.classList.remove("hidden");
 
-    // Load saved reply from localStorage
-    const replyKey = `reply_day_${day}`;
-    const saved = localStorage.getItem(replyKey);
-    if (saved) {
-      replyInput.value = saved;
-      savedReply.classList.remove("hidden");
-      replyText.textContent = saved;
-    } else {
-      replyInput.value = "";
-      savedReply.classList.add("hidden");
+  // Typewriter effect
+  let i = 0;
+  function typeWriter() {
+    if (i < fullText.length) {
+      modalDayText.innerHTML += fullText[i];
+      i++;
+      setTimeout(typeWriter, 25); // adjust speed here
     }
   }
+  typeWriter();
+
+  // Load saved reply from localStorage
+  const replyKey = `reply_day_${day}`;
+  const saved = localStorage.getItem(replyKey);
+  if (saved) {
+    replyInput.value = saved;
+    savedReply.classList.remove("hidden");
+    replyText.textContent = saved;
+  } else {
+    replyInput.value = "";
+    savedReply.classList.add("hidden");
+  }
+}
 
   sendReplyBtn.addEventListener("click", () => {
     if (currentOpenDay === null) return;
@@ -185,3 +197,4 @@
 </script>
 </body>
 </html>
+
