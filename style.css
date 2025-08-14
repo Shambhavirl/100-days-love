@@ -57,6 +57,18 @@ body {
   flex-grow: 1;
 }
 
+.switch:checked:before {
+  content: "";
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  position: absolute;
+  transform-origin: 53px 10px;
+  background-color: transparent;
+  box-shadow: 5px -1px 0px #fff;
+  filter: blue(0px);
+  animation: sun 0.7s forwards ease;
+
 .mini-envelope {
   padding: 6px 10px;
   margin-bottom: 6px;
@@ -216,3 +228,4 @@ body {
   color: var(--purple-900);
   animation: fadeIn 0.5s ease;
 }
+
