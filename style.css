@@ -55,7 +55,24 @@ body {
   margin: 0;
   overflow-y: auto;
   flex-grow: 1;
+  max-height: calc(100vh - 100px); /* adjust as needed */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) rgba(66,16,73,0.1);
 }
+
+#opened-days::-webkit-scrollbar {
+  width: 6px;
+}
+
+#opened-days::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 10px;
+}
+
+#opened-days::-webkit-scrollbar-track {
+  background: rgba(66,16,73,0.06);
+}
+
 
 .mini-envelope {
   padding: 6px 10px;
@@ -216,3 +233,4 @@ body {
   color: var(--purple-900);
   animation: fadeIn 0.5s ease;
 }
+
