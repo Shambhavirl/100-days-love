@@ -121,6 +121,21 @@
       savedReply.classList.add("hidden");
     }
   }
+const themeToggle = document.getElementById("theme-toggle");
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  const icon = themeToggle.textContent.trim();
+  themeToggle.textContent = icon === "🌙" ? "☀️" : "🌙";
+
+  // Save preference
+  localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+});
+
+// Load theme from storage
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark-mode");
+  themeToggle.textContent = "☀️";
+}
 
   sendReplyBtn.addEventListener("click", () => {
     if (currentOpenDay === null) return;
@@ -186,4 +201,5 @@
 </script>
 </body>
 </html>
+
 
