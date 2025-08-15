@@ -1,99 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>pocket post🤍</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pocket post⛄</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;500;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
-
-<div class="container">
-  <!-- Main Content -->
-  <main class="main-content">
-    <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope">
-    <div id="day-message"></div>
-  </main>
-
-  <!-- Sidebar -->
-  <aside class="sidebar" id="opened-days"></aside>
-</div>
-
-<!-- Modal -->
-<div id="message-modal" class="modal hidden">
-  <div class="modal-content">
-    <button id="close-modal">&times;</button>
-    <div id="modal-message" class="typewriter"></div>
+  <div id="message-modal" class="modal hidden">
+    <div class="modal-content">
+      <img src="assets/GKmeme.jpg" alt="Cute meme" class="meme-img" />
+      <div class="text">
+        <button id="close-modal" aria-label="Close message">✖</button>
+        <h3 id="modal-day-title"></h3>
+        <p id="modal-day-text"></p>
+      </div>
+    </div>
   </div>
-</div>
 
-<script>
-const storageKey = "ad_love_notes_opened";
-let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
-let currentDay = new Date().getDate(); // Example: Today’s date as day index
-let messages = [];
+  <aside class="sidebar">
+    <h2>Opened Days</h2>
+    <ul id="opened-days"></ul>
+  </aside>
 
-// Force first 24 days open
-for (let i = 0; i < 24; i++) {
-  if (!openedDays.includes(i)) openedDays.push(i);
-}
-openedDays.sort((a,b) => a - b);
+  <div class="content">
+    <h1>pocket post</h1>
+    <div id="big-envelope-container">
+      <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
+    </div>
 
-// Save opened day
-function saveOpenedDay(day) {
-  if (!openedDays.includes(day)) {
-    openedDays.push(day);
-    openedDays.sort((a,b) => a - b);
-    localStorage.setItem(storageKey, JSON.stringify(openedDays));
-    renderSidebar();
-  }
-}
+    <div id="day-message" class="hidden">
+      <h3 id="day-title"></h3>
+      <p id="day-text"></p>
+    </div>
+  </div>
 
-// Render sidebar
-function renderSidebar() {
-  const sidebar = document.getElementById("opened-days");
-  sidebar.innerHTML = "";
-  openedDays.forEach(day => {
-    if (messages[day]) {
-      const div = document.createElement("div");
-      div.className = "mini-envelope";
-      div.textContent = `Day ${day + 1}`;
-      div.onclick = () => showMessageModal(day);
-      sidebar.appendChild(div);
+  <script>
+    const bigEnvelope = document.getElementById("big-envelope");
+    const modal = document.getElementById("message-modal");
+    const modalDayTitle = document.getElementById("modal-day-title");
+    const modalDayText = document.getElementById("modal-day-text");
+    const closeModalBtn = document.getElementById("close-modal");
+    const memeImg = document.querySelector(".meme-img");
+    const openedDaysList = document.getElementById("opened-days");
+
+    const storageKey = "ad_love_notes_opened";
+    let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+// Force Day 6, 7, 8, and 9 to appear
+if (!openedDays.includes(5)) openedDays.push(5); // Day 6
+if (!openedDays.includes(6)) openedDays.push(6); // Day 7
+if (!openedDays.includes(7)) openedDays.push(7); // Day 8
+if (!openedDays.includes(8)) openedDays.push(8); // Day 9
+if (!openedDays.includes(9)) openedDays.push(9); // Day 10
+if (!openedDays.includes(17)) openedDays.push(17); // Day 17
+if (!openedDays.includes(19)) openedDays.push(19); // Day 19
+if (!openedDays.includes(21)) openedDays.push(21); // Day 21
+    
+localStorage.setItem(storageKey, JSON.stringify(openedDays));
+
+
+
+    const startDate = new Date("2025-06-12T00:00:00");
+    const today = new Date();
+    const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+
+    function saveOpenedDay(day) {
+      if (!openedDays.includes(day)) {
+        openedDays.push(day);
+        localStorage.setItem(storageKey, JSON.stringify(openedDays));
+      }
     }
-  });
+
+    function renderSidebar(messages) {
+      openedDaysList.innerHTML = "";
+
+      openedDays.sort((a, b) => a - b).forEach((day) => {
+        const li = document.createElement("li");
+        li.textContent = `Day ${day + 1}`;
+        li.className = "mini-envelope";
+        li.addEventListener("click", () => {
+          showMessageModal(day, messages);
+        });
+        openedDaysList.appendChild(li);
+      });
+    }
+
+function showMessageModal(day, messages) {
+  modalDayTitle.textContent = `Day ${day + 1}`;
+  modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+
+  memeImg.style.display = (day === 0) ? "block" : "none";
+  modal.classList.remove("hidden");
 }
 
-// Show modal
-function showMessageModal(day) {
-  document.getElementById("modal-message").textContent = messages[day];
-  document.getElementById("message-modal").classList.remove("hidden");
-}
 
-// Close modal
-document.getElementById("close-modal").onclick = () => {
-  document.getElementById("message-modal").classList.add("hidden");
-};
+    bigEnvelope.addEventListener("click", () => {
+      if (currentDay < 0 || currentDay > 99) return;
 
-// Load messages.json
-fetch("messages.json")
-  .then(res => res.json())
-  .then(data => {
-    messages = data;
-    renderSidebar();
-  });
+      fetch("messages.json")
+        .then((response) => response.json())
+        .then((messages) => {
+          bigEnvelope.src = "assets/envelope_open.png";
+          saveOpenedDay(currentDay);
+          renderSidebar(messages);
+          showMessageModal(currentDay, messages);
+        });
+    });
 
-// Envelope click to open today’s letter
-document.getElementById("big-envelope").onclick = () => {
-  if (messages[currentDay]) {
-    saveOpenedDay(currentDay);
-    showMessageModal(currentDay);
-    document.getElementById("big-envelope").src = "assets/envelope_open.png";
-  } else {
-    alert("No letter for today yet 💌");
-  }
-};
-</script>
+    closeModalBtn.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
 
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+      }
+    });
+
+    // Ensure Day 1 is always added to sidebar
+    if (!openedDays.includes(0)) {
+      openedDays.push(0);
+      localStorage.setItem(storageKey, JSON.stringify(openedDays));
+    }
+
+    // Load sidebar immediately on page load
+    fetch("messages.json")
+      .then((res) => res.json())
+      .then((messages) => {
+        renderSidebar(messages);
+      });
+
+    const hasSeenToday = openedDays.includes(currentDay);
+
+    fetch("messages.json")
+      .then(res => res.json())
+      .then(messages => {
+        if (!hasSeenToday && currentDay >= 0 && currentDay < 100 && messages[currentDay]) {
+          document.title = "💌 New! 100 Days With You";
+        } else {
+          document.title = "100 Days With You 💟(and more obviously)";
+        }
+      });
+  </script>
 </body>
 </html>
