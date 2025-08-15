@@ -1,16 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>100 Days With You 💌</title>
-  <title>modern day love letters hehe</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-@@ -12,28 +12,38 @@
+</head>
 <body>
   <div class="main-container">
     <aside class="sidebar">
-      <h2>Opened Days</h2>
       <h2>Opened Days <span id="notificationBadge" class="notification-badge hidden">💌</span></h2>
       <ul id="opened-days"></ul>
     </aside>
@@ -22,19 +22,20 @@
         <img id="big-envelope" src="assets/envelope_closed.png" alt="Envelope" />
         <span id="notification-badge">💌</span>
       </div>
+
       <div id="day-message" class="hidden">
         <h3 id="day-title"></h3>
         <p id="day-text"></p>
 
-      <div id="spotify-box">
-        <h3>🎵 Our Spotify Blend</h3>
-        <iframe
-          src="https://open.spotify.com/embed/playlist/37i9dQZF1EJMnacOonuiK5"
-          width="100%" height="152" frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          >
-        </iframe>
+        <div id="spotify-box">
+          <h3>🎵 Our Spotify Blend</h3>
+          <iframe
+            src="https://open.spotify.com/embed/playlist/37i9dQZF1EJMnacOonuiK5"
+            width="100%" height="152" frameborder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy">
+          </iframe>
+        </div>
       </div>
     </div>
   </div>
@@ -50,15 +51,22 @@
         <div id="reply-section">
           <h4>Your Reply ✍️</h4>
           <textarea id="reply-input" placeholder="omg ur replying!!"></textarea>
-@@ -46,29 +56,72 @@ <h5>📝 Your saved reply:</h5>
+          <button id="send-reply">Send Reply 💌</button>
+
+          <h5>📝 Your saved reply:</h5>
+          <div id="saved-reply" class="hidden">
+            <p id="reply-text"></p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-  <iframe id="spotify-embed" src="https://open.spotify.com/embed/playlist/your-blend-id" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
   <script>
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCmQCgyOSPo5eH1P01J-eezbHYKvXFAwl8",
       authDomain: "letters-adit.firebaseapp.com",
@@ -73,6 +81,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Elements
     const bigEnvelope = document.getElementById("big-envelope");
     const modal = document.getElementById("message-modal");
     const modalDayTitle = document.getElementById("modal-day-title");
@@ -80,39 +89,40 @@
     const closeModalBtn = document.getElementById("close-modal");
     const memeImg = document.querySelector(".meme-img");
     const openedDaysList = document.getElementById("opened-days");
-    const replySection = document.getElementById("reply-section");
-    const notificationBadge = document.getElementById("notificationBadge");
-
     const replyInput = document.getElementById("reply-input");
     const sendReplyBtn = document.getElementById("send-reply");
     const savedReply = document.getElementById("saved-reply");
     const replyText = document.getElementById("reply-text");
-    const notificationBadge = document.getElementById("notification-badge");
+    const notificationBadge = document.getElementById("notificationBadge");
 
+    // Data
     const storageKey = "ad_love_notes_opened";
     let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+    let firebaseReplies = {};
+    let currentOpenDay = null;
 
     const startDate = new Date("2025-06-12T00:00:00");
     const today = new Date();
     const currentDay = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
 
-    const storageKey = "ad_love_notes_opened";
-    let openedDays = [];
+    // Force Day 1–24 open
+    for (let day = 0; day < 24; day++) {
+      if (!openedDays.includes(day)) {
+        openedDays.push(day);
+      }
+    }
+    openedDays.sort((a,b) => a - b);
 
-    let firebaseReplies = {};
-    let currentOpenDay = null;
-
-    // Fetch messages and replies, then init sidebar + open today message if any
+    // Fetch messages + replies
     fetch("messages.json")
       .then((res) => res.json())
       .then((messages) => {
-        openedDays = Object.keys(messages).map(day => parseInt(day)).sort((a,b) => a - b);
-
         db.ref("replies").once("value").then(snapshot => {
           firebaseReplies = snapshot.val() || {};
           renderSidebar(messages);
 
-          if (messages[currentDay]) {
+          // Auto-open today's letter if it's new
+          if (messages[currentDay] && !openedDays.includes(currentDay)) {
             showMessageModal(currentDay, messages);
             bigEnvelope.src = "assets/envelope_open.png";
             saveOpenedDay(currentDay);
@@ -122,48 +132,43 @@
         localStorage.setItem(storageKey, JSON.stringify(openedDays));
       })
       .catch(err => {
-        console.error("Error loading messages I HATE CODING", err);
+        console.error("Error loading messages", err);
         alert("Couldn't load love letters 😭");
       });
 
     function saveOpenedDay(day) {
       if (!openedDays.includes(day)) {
         openedDays.push(day);
-@@ -78,76 +131,98 @@ <h5>📝 Your saved reply:</h5>
+        openedDays.sort((a,b) => a - b);
+        localStorage.setItem(storageKey, JSON.stringify(openedDays));
+      }
+    }
 
     function renderSidebar(messages) {
       openedDaysList.innerHTML = "";
-      openedDays.sort((a, b) => a - b).forEach((day) => {
+      let unreadCount = 0;
+
+      openedDays.forEach(day => {
         if (messages[day]) {
           const li = document.createElement("li");
           li.textContent = `Day ${day + 1}`;
           li.className = "mini-envelope";
-          if (localStorage.getItem(`reply_day_${day}`)) {
+
+          const reply = firebaseReplies[`day_${day}`];
+          if (reply && reply.text) {
             li.classList.add("replied");
+            li.textContent += " 💬";
+            unreadCount++;
           }
-          li.addEventListener("click", () => showMessageModal(day, messages));
+
+          li.addEventListener("click", () => {
+            showMessageModal(day, messages);
+            bigEnvelope.src = "assets/envelope_open.png";
+            saveOpenedDay(day);
+          });
+
           openedDaysList.appendChild(li);
-      let unreadCount = 0;
-
-      openedDays.sort((a,b) => a - b).forEach(day => {
-        const li = document.createElement("li");
-        li.textContent = `Day ${day + 1}`;
-        li.className = "mini-envelope";
-
-        const reply = firebaseReplies[`day_${day}`];
-        if (reply && reply.text) {
-          li.classList.add("replied");
-          li.textContent += " 💬";
-          unreadCount++;
         }
-
-        li.addEventListener("click", () => {
-          showMessageModal(day, messages);
-          bigEnvelope.src = "assets/envelope_open.png";
-          saveOpenedDay(day);
-        });
-
-        openedDaysList.appendChild(li);
       });
 
       if (unreadCount > 0) {
@@ -181,35 +186,27 @@
       modal.classList.remove("hidden");
 
       currentOpenDay = day;
-      const replyKey = `reply_day_${day}`;
-      const saved = localStorage.getItem(replyKey);
-      if (saved) {
-        replyInput.value = saved;
 
       const replyObj = firebaseReplies[`day_${day}`];
       if (replyObj && replyObj.text) {
         replyInput.value = replyObj.text;
         replyText.textContent = replyObj.text;
         savedReply.classList.remove("hidden");
-        replyText.textContent = saved;
       } else {
         replyInput.value = "";
         savedReply.classList.add("hidden");
       }
     }
 
-    let currentOpenDay = null;
-
+    // Send reply
     sendReplyBtn.addEventListener("click", () => {
       if (currentOpenDay === null) return;
 
       const reply = replyInput.value.trim();
-      if (!reply) {
       if (!reply.length) {
         alert("Please type something before sending your reply!");
         return;
       }
-      localStorage.setItem(`reply_day_${currentOpenDay}`, reply);
 
       const replyRef = db.ref(`replies/day_${currentOpenDay}`);
       replyRef.set({
@@ -222,15 +219,11 @@
       document.querySelectorAll(".mini-envelope")[currentOpenDay]?.classList.add("replied");
     });
 
+    // Envelope click
     bigEnvelope.addEventListener("click", () => {
-      fetch("messages.json?" + Date.now())
       fetch("messages.json")
         .then(res => res.json())
         .then(messages => {
-          bigEnvelope.src = "assets/envelope_open.png";
-          saveOpenedDay(currentDay);
-          renderSidebar(messages);
-          showMessageModal(currentDay, messages);
           db.ref("replies").once("value").then(snapshot => {
             firebaseReplies = snapshot.val() || {};
             bigEnvelope.src = "assets/envelope_open.png";
@@ -241,21 +234,10 @@
         });
     });
 
-    closeModalBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+    // Modal close
     closeModalBtn.addEventListener("click", () => {
       modal.classList.add("hidden");
     });
-
-    fetch("messages.json?" + Date.now())
-      .then(res => res.json())
-      .then(messages => {
-        renderSidebar(messages);
-        if (!openedDays.includes(currentDay) && messages[currentDay]) {
-          document.title = "💌 New! 100 Days With You";
-          notificationBadge.style.display = "inline-block";
-        }
-      });
     modal.addEventListener("click", e => {
       if (e.target === modal) {
         modal.classList.add("hidden");
