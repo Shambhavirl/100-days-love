@@ -113,24 +113,6 @@
   memeImg.style.display = (day === 0) ? "block" : "none";
   modal.classList.remove("hidden");
 
-  // Typewriter effect
-  let i = 0;
- function typeWriter(element, text, delay = 30) {
-  element.innerHTML = ''; // clear previous
-  let i = 0;
-  function type() {
-    if (i < text.length) {
-      element.innerHTML += text[i];
-      i++;
-      setTimeout(type, delay);
-    }
-  }
-  type();
-}
-
-modalDayText.innerHTML = ''; // clear old text
-typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>"));
-
   // Load saved reply from localStorage
   const replyKey = `reply_day_${day}`;
   const saved = localStorage.getItem(replyKey);
@@ -208,5 +190,6 @@ typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace
 </script>
 </body>
 </html>
+
 
 
