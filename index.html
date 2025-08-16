@@ -108,11 +108,14 @@
  function showMessageModal(day, messages) {
   currentOpenDay = day;
   modalDayTitle.textContent = `Day ${day + 1}`;
+  const fullText = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+  modalDayText.innerHTML = ""; // clear previous content
   memeImg.style.display = (day === 0) ? "block" : "none";
   modal.classList.remove("hidden");
 
-  // just dump the text directly
-  modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+
+modalDayText.innerHTML = ''; // clear old text
+typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>"));
 
   // Load saved reply from localStorage
   const replyKey = `reply_day_${day}`;
@@ -125,8 +128,6 @@
     replyInput.value = "";
     savedReply.classList.add("hidden");
   }
-}
-
 }
 
   sendReplyBtn.addEventListener("click", () => {
@@ -193,7 +194,4 @@
 </script>
 </body>
 </html>
-
-
-
 
