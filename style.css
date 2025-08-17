@@ -104,6 +104,13 @@ h1 {
   color: #ffb6c1;
 }
 
+.meme-img {
+  display: none; /* hidden by default */
+  max-width: 100%;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
 #modal-day-text {
   line-height: 1.6;
   white-space: pre-line;
@@ -164,3 +171,4 @@ h1 {
   padding: 10px;
   border-radius: 8px;
 }
+
