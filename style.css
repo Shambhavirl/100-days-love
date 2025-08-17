@@ -82,7 +82,7 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
-  transform: translateY(100px); /* move down 100px */
+  transform: translateY(175px); /* move down 100px */
 }
 
 
@@ -262,6 +262,7 @@ body {
   top: 10px;
   right: 40px; /* slightly left of close button */
 }
+
 
 
 
