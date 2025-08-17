@@ -146,6 +146,14 @@
     modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
     memeImg.style.display = (day === 0) ? "block" : "none";
     modal.classList.remove("hidden");
+// Only show meme for Day 1
+  if (day === 0) {
+    memeImg.style.display = "block";
+  } else {
+    memeImg.style.display = "none";
+  }
+
+  modal.classList.remove("hidden");
 
     // check favorite state
     favoriteBtn.textContent = favoriteDays.includes(day) ? "💖" : "💜";
@@ -235,3 +243,4 @@
 </script>
 </body>
 </html>
+
