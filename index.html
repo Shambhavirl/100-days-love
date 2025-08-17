@@ -16,9 +16,10 @@
       <img src="assets/GKmeme.jpg" alt="Cute meme" class="meme-img" />
       <div class="text">
         <button id="close-modal" aria-label="Close message">✖</button>
+        <button id="favorite-btn" aria-label="Favorite this letter">💜</button>
         <h3 id="modal-day-title"></h3>
         <p id="modal-day-text"></p>
-
+        
         <!-- Reply Section -->
         <div id="reply-section">
           <h4>Your Reply ✍️</h4>
@@ -37,6 +38,9 @@
   <aside class="sidebar">
     <h2>Opened Days</h2>
     <ul id="opened-days"></ul>
+
+    <h2>Favorites 💜</h2>
+    <ul id="favorite-days"></ul>
   </aside>
 
   <div class="content">
@@ -59,6 +63,8 @@
   const closeModalBtn = document.getElementById("close-modal");
   const memeImg = document.querySelector(".meme-img");
   const openedDaysList = document.getElementById("opened-days");
+  const favoriteBtn = document.getElementById("favorite-btn");
+  const favoriteDaysList = document.getElementById("favorite-days");
 
   const replySection = document.getElementById("reply-section");
   const replyInput = document.getElementById("reply-input");
@@ -68,6 +74,9 @@
 
   const storageKey = "ad_love_notes_opened";
   let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+  const favoritesKey = "ad_love_notes_favorites";
+  let favoriteDays = JSON.parse(localStorage.getItem(favoritesKey)) || [];
 
   // Force specific days to appear
   [5,6,7,8,9,17,19,21,22,23,24].forEach(d => {
@@ -89,7 +98,6 @@
   function renderSidebar(messages) {
     openedDaysList.innerHTML = "";
     openedDays.sort((a, b) => a - b).forEach(day => {
-      // Only show if day <= 23 OR message exists
       if (day <= 23 || (messages[day] && messages[day].trim() !== "")) {
         const li = document.createElement("li");
         li.textContent = `Day ${day + 1}`;
@@ -100,6 +108,34 @@
         openedDaysList.appendChild(li);
       }
     });
+    renderFavorites(messages);
+  }
+
+  function saveFavoriteDay(day) {
+    if (!favoriteDays.includes(day)) {
+      favoriteDays.push(day);
+      localStorage.setItem(favoritesKey, JSON.stringify(favoriteDays));
+    }
+  }
+
+  function removeFavoriteDay(day) {
+    favoriteDays = favoriteDays.filter(d => d !== day);
+    localStorage.setItem(favoritesKey, JSON.stringify(favoriteDays));
+  }
+
+  function renderFavorites(messages) {
+    favoriteDaysList.innerHTML = "";
+    favoriteDays.sort((a, b) => a - b).forEach(day => {
+      if(messages[day]) {
+        const li = document.createElement("li");
+        li.textContent = `Day ${day + 1}`;
+        li.className = "mini-envelope";
+        li.addEventListener("click", () => {
+          showMessageModal(day, messages);
+        });
+        favoriteDaysList.appendChild(li);
+      }
+    });
   }
 
   let currentOpenDay = null;
@@ -107,14 +143,13 @@
   function showMessageModal(day, messages) {
     currentOpenDay = day;
     modalDayTitle.textContent = `Day ${day + 1}`;
-
-    // instantly show text (no typewriter)
     modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-
     memeImg.style.display = (day === 0) ? "block" : "none";
     modal.classList.remove("hidden");
 
-    // Load saved reply from localStorage
+    // check favorite state
+    favoriteBtn.textContent = favoriteDays.includes(day) ? "💖" : "💜";
+
     const replyKey = `reply_day_${day}`;
     const saved = localStorage.getItem(replyKey);
     if (saved) {
@@ -126,6 +161,20 @@
       savedReply.classList.add("hidden");
     }
   }
+
+  favoriteBtn.addEventListener("click", () => {
+    if (currentOpenDay === null) return;
+    if (favoriteDays.includes(currentOpenDay)) {
+      removeFavoriteDay(currentOpenDay);
+      favoriteBtn.textContent = "💜";
+    } else {
+      saveFavoriteDay(currentOpenDay);
+      favoriteBtn.textContent = "💖";
+    }
+    fetch("messages.json")
+      .then(res => res.json())
+      .then(messages => renderFavorites(messages));
+  });
 
   sendReplyBtn.addEventListener("click", () => {
     if (currentOpenDay === null) return;
@@ -141,7 +190,6 @@
 
   bigEnvelope.addEventListener("click", () => {
     if (currentDay < 0 || currentDay > 99) return;
-
     fetch("messages.json")
       .then(response => response.json())
       .then(messages => {
@@ -162,13 +210,11 @@
     }
   });
 
-  // Ensure Day 1 is always opened
   if (!openedDays.includes(0)) {
     openedDays.push(0);
     localStorage.setItem(storageKey, JSON.stringify(openedDays));
   }
 
-  // Load sidebar immediately
   fetch("messages.json")
     .then(res => res.json())
     .then(messages => {
@@ -189,4 +235,3 @@
 </script>
 </body>
 </html>
-
