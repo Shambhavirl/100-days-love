@@ -81,7 +81,7 @@ body {
 #big-envelope-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 50px;
+  margin-bottom: 100px;
 }
 
 #big-envelope {
@@ -260,6 +260,7 @@ body {
   top: 10px;
   right: 40px; /* slightly left of close button */
 }
+
 
 
 
