@@ -69,7 +69,7 @@
   const storageKey = "ad_love_notes_opened";
   let openedDays = JSON.parse(localStorage.getItem(storageKey)) || [];
 
-  // Force specific days to appear (your existing forced days)
+  // Force specific days to appear
   [5,6,7,8,9,17,19,21,22,23,24].forEach(d => {
     if (!openedDays.includes(d)) openedDays.push(d);
   });
@@ -86,73 +86,55 @@
     }
   }
 
- function renderSidebar(messages) {
-  openedDaysList.innerHTML = "";
-  openedDays.sort((a, b) => a - b).forEach(day => {
-    // Only show if day <= 23 OR message exists for that day
-    if(day <= 23 || (messages[day] && messages[day].trim() !== "")) {
-      const li = document.createElement("li");
-      li.textContent = `Day ${day + 1}`;
-      li.className = "mini-envelope";
-      li.addEventListener("click", () => {
-        showMessageModal(day, messages);
-      });
-      openedDaysList.appendChild(li);
-    }
-  });
-}
-
+  function renderSidebar(messages) {
+    openedDaysList.innerHTML = "";
+    openedDays.sort((a, b) => a - b).forEach(day => {
+      // Only show if day <= 23 OR message exists
+      if (day <= 23 || (messages[day] && messages[day].trim() !== "")) {
+        const li = document.createElement("li");
+        li.textContent = `Day ${day + 1}`;
+        li.className = "mini-envelope";
+        li.addEventListener("click", () => {
+          showMessageModal(day, messages);
+        });
+        openedDaysList.appendChild(li);
+      }
+    });
+  }
 
   let currentOpenDay = null;
 
- function showMessageModal(day, messages) {
-  currentOpenDay = day;
-  modalDayTitle.textContent = `Day ${day + 1}`;
-  const fullText = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
-  modalDayText.innerHTML = ""; // clear previous content
-  memeImg.style.display = (day === 0) ? "block" : "none";
-  modal.classList.remove("hidden");
+  function showMessageModal(day, messages) {
+    currentOpenDay = day;
+    modalDayTitle.textContent = `Day ${day + 1}`;
 
- // Typewriter effect
-  let i = 0;
- function typeWriter(element, text, delay = 30) {
-  element.innerHTML = ''; // clear previous
-  let i = 0;
-  function type() {
-    if (i < text.length) {
-      element.innerHTML += text[i];
-      i++;
-      setTimeout(type, delay);
+    // instantly show text (no typewriter)
+    modalDayText.innerHTML = (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>");
+
+    memeImg.style.display = (day === 0) ? "block" : "none";
+    modal.classList.remove("hidden");
+
+    // Load saved reply from localStorage
+    const replyKey = `reply_day_${day}`;
+    const saved = localStorage.getItem(replyKey);
+    if (saved) {
+      replyInput.value = saved;
+      savedReply.classList.remove("hidden");
+      replyText.textContent = saved;
+    } else {
+      replyInput.value = "";
+      savedReply.classList.add("hidden");
     }
   }
-  type();
-}
-modalDayText.innerHTML = ''; // clear old text
-typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace(/\n/g, "<br>"));
-
-  // Load saved reply from localStorage
-  const replyKey = `reply_day_${day}`;
-  const saved = localStorage.getItem(replyKey);
-  if (saved) {
-    replyInput.value = saved;
-    savedReply.classList.remove("hidden");
-    replyText.textContent = saved;
-  } else {
-    replyInput.value = "";
-    savedReply.classList.add("hidden");
-  }
-}
 
   sendReplyBtn.addEventListener("click", () => {
     if (currentOpenDay === null) return;
     const reply = replyInput.value.trim();
     if (reply.length === 0) return;
 
-    // Save reply to localStorage
     const replyKey = `reply_day_${currentOpenDay}`;
     localStorage.setItem(replyKey, reply);
 
-    // Show saved reply area
     replyText.textContent = reply;
     savedReply.classList.remove("hidden");
   });
@@ -186,7 +168,7 @@ typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace
     localStorage.setItem(storageKey, JSON.stringify(openedDays));
   }
 
-  // Load sidebar immediately on page load
+  // Load sidebar immediately
   fetch("messages.json")
     .then(res => res.json())
     .then(messages => {
@@ -207,5 +189,3 @@ typeWriter(modalDayText, (messages[day] || "Message not found yet 💌").replace
 </script>
 </body>
 </html>
-
-
