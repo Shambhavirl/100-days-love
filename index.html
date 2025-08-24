@@ -79,7 +79,7 @@
   let favoriteDays = JSON.parse(localStorage.getItem(favoritesKey)) || [];
 
   // Force specific days to appear
-  [5,6,7,8,9,17,19,21,22,23,24,25].forEach(d => {
+  [5,6,7,8,9,17,19,21,22,23,24,25,26].forEach(d => {
     if (!openedDays.includes(d)) openedDays.push(d);
   });
   localStorage.setItem(storageKey, JSON.stringify(openedDays));
